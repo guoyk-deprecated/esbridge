@@ -1,2 +1,3 @@
 # esbridge
-elasticsearch 冷数据自动导入导出工具
+
+Elasticsearch 索引导入导出工具
