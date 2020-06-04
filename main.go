@@ -127,8 +127,16 @@ func mainDumpToFile() (err error) {
 	dw := NewDumpWriter(dirWorkspace)
 	defer dw.Close()
 
-	ss := clientES.Scroll(optIndex).Type("_doc").Scroll("1m").Size(1000)
+	var total int64
+	if total, err = clientES.Count(optIndex).Do(context.Background()); err != nil {
+		return
+	}
+
+	ss := clientES.Scroll(optIndex).Type("_doc").Scroll("1m").Size(10000)
 	defer ss.Clear(context.Background())
+
+	p := NewProgress(total)
+
 	for {
 		var res *elastic.SearchResult
 		if res, err = ss.Do(context.Background()); err != nil {
@@ -140,6 +148,7 @@ func mainDumpToFile() (err error) {
 			}
 		}
 		for _, h := range res.Hits.Hits {
+			p.Incr()
 			if h.Source != nil {
 				if err = dw.Append(*h.Source); err != nil {
 					return
