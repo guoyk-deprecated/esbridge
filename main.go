@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
+	"strings"
 )
 
 var (
@@ -40,6 +40,9 @@ func load() {
 
 	if optIndex == "" {
 		panic("missing environment variable: INDEX")
+	}
+	if strings.Contains(optIndex, "*") || strings.Contains(optIndex, "?") {
+		panic("invalid environment variable: INDEX, '*' or '?' is not allowed")
 	}
 	switch optAction {
 	case actionDump:
@@ -81,13 +84,13 @@ func main() {
 	load()
 
 	// setup workspace
-	localDir := filepath.Join(optWorkspace, optIndex)
-	if err = os.RemoveAll(localDir); err != nil {
+	if err = os.RemoveAll(optWorkspace); err != nil {
 		return
 	}
-	if err = os.MkdirAll(localDir, 0755); err != nil {
+	if err = os.MkdirAll(optWorkspace, 0755); err != nil {
 		return
 	}
+	defer os.RemoveAll(optWorkspace)
 
 	// setup es
 	var clientES *elastic.Client
@@ -104,10 +107,16 @@ func main() {
 	// dump or load
 	switch optAction {
 	case actionDump:
-		if err = taskExportESToLocal(clientES, localDir, optIndex); err != nil {
+		if err = taskOpenESIndex(clientES, optIndex); err != nil {
 			return
 		}
-		if err = taskExportLocalToCOS(localDir, clientCOS, optIndex); err != nil {
+		if err = taskExportESToLocal(clientES, optWorkspace, optIndex); err != nil {
+			return
+		}
+		if err = taskExportLocalToCOS(optWorkspace, clientCOS, optIndex); err != nil {
+			return
+		}
+		if err = taskDeleteESIndex(clientES, optIndex); err != nil {
 			return
 		}
 	case actionLoad:

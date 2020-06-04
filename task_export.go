@@ -13,6 +13,18 @@ import (
 	"strings"
 )
 
+func taskOpenESIndex(clientES *elastic.Client, index string) (err error) {
+	log.Printf("open index and wait active: %s", index)
+	_, err = clientES.OpenIndex(index).WaitForActiveShards("all").Do(context.Background())
+	return
+}
+
+func taskDeleteESIndex(clientES *elastic.Client, index string) (err error) {
+	log.Printf("delete index: %s", index)
+	_, err = clientES.DeleteIndex(index).Do(context.Background())
+	return
+}
+
 func taskExportESToLocal(clientES *elastic.Client, dir, index string) (err error) {
 	log.Printf("export es to local: %s", index)
 
