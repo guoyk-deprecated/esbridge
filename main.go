@@ -23,8 +23,9 @@ var (
 )
 
 const (
-	actionDump = "dump"
-	actionLoad = "load"
+	actionDump   = "dump"
+	actionLoad   = "load"
+	actionSearch = "search"
 )
 
 func load() {
@@ -43,6 +44,10 @@ func load() {
 	switch optAction {
 	case actionDump:
 	case actionLoad:
+		if optProject == "" {
+			panic("missing environment variable: PROJECT")
+		}
+	case actionSearch:
 	default:
 		panic("invalid environment variable: ACTION")
 	}
@@ -99,12 +104,13 @@ func main() {
 	// dump or load
 	switch optAction {
 	case actionDump:
-		if err = dumpESToLocal(clientES, localDir, optIndex); err != nil {
+		if err = taskExportESToLocal(clientES, localDir, optIndex); err != nil {
 			return
 		}
-		if err = dumpLocalToCOS(localDir, clientCOS, optIndex); err != nil {
+		if err = taskExportLocalToCOS(localDir, clientCOS, optIndex); err != nil {
 			return
 		}
 	case actionLoad:
+	case actionSearch:
 	}
 }

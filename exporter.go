@@ -11,14 +11,14 @@ var (
 	newLine = []byte{'\n'}
 )
 
-// DumpWriter is NOT concurrent-safe
-type DumpWriter struct {
+// Exporter is NOT concurrent-safe
+type Exporter struct {
 	dir   string
 	files map[string]*os.File
 	zips  map[string]*gzip.Writer
 }
 
-func (w *DumpWriter) Append(rm json.RawMessage) (err error) {
+func (x *Exporter) Append(rm json.RawMessage) (err error) {
 	var m map[string]interface{}
 	if err = json.Unmarshal(rm, &m); err != nil {
 		return
@@ -27,23 +27,23 @@ func (w *DumpWriter) Append(rm json.RawMessage) (err error) {
 	if p == "" {
 		p = "unknown"
 	}
-	return w.append(rm, p)
+	return x.append(rm, p)
 }
 
-func (w *DumpWriter) append(rm json.RawMessage, p string) (err error) {
-	f := w.files[p]
+func (x *Exporter) append(rm json.RawMessage, p string) (err error) {
+	f := x.files[p]
 	if f == nil {
-		if f, err = os.OpenFile(filepath.Join(w.dir, p+".ndjson.gz"), os.O_CREATE|os.O_RDWR, 0640); err != nil {
+		if f, err = os.OpenFile(filepath.Join(x.dir, p+".ndjson.gz"), os.O_CREATE|os.O_RDWR, 0640); err != nil {
 			return
 		}
-		w.files[p] = f
+		x.files[p] = f
 	}
-	z := w.zips[p]
+	z := x.zips[p]
 	if z == nil {
 		if z, err = gzip.NewWriterLevel(f, gzip.BestCompression); err != nil {
 			return
 		}
-		w.zips[p] = z
+		x.zips[p] = z
 	}
 	if _, err = z.Write(rm); err != nil {
 		return
@@ -54,25 +54,25 @@ func (w *DumpWriter) append(rm json.RawMessage, p string) (err error) {
 	return
 }
 
-func (w *DumpWriter) Close() (err error) {
+func (x *Exporter) Close() (err error) {
 	// close zips
-	zips := w.zips
-	w.zips = nil
+	zips := x.zips
+	x.zips = nil
 	for _, z := range zips {
 		_ = z.Close()
 	}
 
 	// close files
-	files := w.files
-	w.files = nil
+	files := x.files
+	x.files = nil
 	for _, f := range files {
 		_ = f.Close()
 	}
 	return
 }
 
-func NewDumpWriter(dir string) *DumpWriter {
-	return &DumpWriter{
+func NewExporter(dir string) *Exporter {
+	return &Exporter{
 		dir:   dir,
 		files: make(map[string]*os.File),
 		zips:  make(map[string]*gzip.Writer),

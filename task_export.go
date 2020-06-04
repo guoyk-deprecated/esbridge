@@ -7,14 +7,17 @@ import (
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-func dumpESToLocal(clientES *elastic.Client, dir, index string) (err error) {
-	dw := NewDumpWriter(dir)
-	defer dw.Close()
+func taskExportESToLocal(clientES *elastic.Client, dir, index string) (err error) {
+	log.Printf("export es to local: %s", index)
+
+	x := NewExporter(dir)
+	defer x.Close()
 
 	var total int64
 	if total, err = clientES.Count(index).Do(context.Background()); err != nil {
@@ -24,7 +27,7 @@ func dumpESToLocal(clientES *elastic.Client, dir, index string) (err error) {
 	ss := clientES.Scroll(index).Type("_doc").Scroll("1m").Size(10000)
 	defer ss.Clear(context.Background())
 
-	p := NewProgress(total, fmt.Sprintf("export [%s]", index))
+	p := NewProgress(total, fmt.Sprintf("es to local [%s]", index))
 
 	for {
 		var res *elastic.SearchResult
@@ -39,7 +42,7 @@ func dumpESToLocal(clientES *elastic.Client, dir, index string) (err error) {
 		for _, h := range res.Hits.Hits {
 			p.Incr()
 			if h.Source != nil {
-				if err = dw.Append(*h.Source); err != nil {
+				if err = x.Append(*h.Source); err != nil {
 					return
 				}
 			}
@@ -48,12 +51,15 @@ func dumpESToLocal(clientES *elastic.Client, dir, index string) (err error) {
 	return
 }
 
-func dumpLocalToCOS(dir string, clientCOS *cos.Client, index string) (err error) {
+func taskExportLocalToCOS(dir string, clientCOS *cos.Client, index string) (err error) {
+	log.Printf("export local to cos: %s", index)
+
 	var fis []os.FileInfo
 	if fis, err = ioutil.ReadDir(dir); err != nil {
 		return err
 	}
-	p := NewProgress(int64(len(fis)), "upload cos")
+
+	p := NewProgress(int64(len(fis)), fmt.Sprintf("local to cos [%s]", index))
 	for _, fi := range fis {
 		p.Incr()
 		if !strings.HasSuffix(fi.Name(), ".ndjson.gz") {
