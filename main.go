@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/guoyk93/env"
 	"github.com/olivere/elastic"
 	"github.com/tencentyun/cos-go-sdk-v5"
@@ -135,7 +136,7 @@ func mainDumpToFile() (err error) {
 	ss := clientES.Scroll(optIndex).Type("_doc").Scroll("1m").Size(10000)
 	defer ss.Clear(context.Background())
 
-	p := NewProgress(total)
+	p := NewProgress(total, fmt.Sprintf("export [%s]", optIndex))
 
 	for {
 		var res *elastic.SearchResult
