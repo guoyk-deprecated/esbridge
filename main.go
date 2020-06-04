@@ -1,27 +1,25 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"github.com/guoyk93/env"
 	"github.com/olivere/elastic"
 	"github.com/tencentyun/cos-go-sdk-v5"
-	"io"
 	"log"
+	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 )
 
 var (
-	optIndex     string
-	optAction    string
-	optWorkspace string
-	optEsURL     string
-	/*
-		optCosURL       string
-		optCosSecretID  string
-		optCosSecretKey string
-	*/
+	optIndex        string
+	optAction       string
+	optProject      string
+	optWorkspace    string
+	optEsURL        string
+	optCosURL       string
+	optCosSecretID  string
+	optCosSecretKey string
 )
 
 const (
@@ -32,13 +30,12 @@ const (
 func load() {
 	env.MustStringVar(&optIndex, "INDEX", "")
 	env.MustStringVar(&optAction, "ACTION", actionDump)
+	env.MustStringVar(&optProject, "PROJECT", "")
 	env.MustStringVar(&optWorkspace, "WORKSPACE", "")
 	env.MustStringVar(&optEsURL, "ES_URL", "http://127.0.0.1:9200")
-	/*
-		env.MustStringVar(&optCosURL, "COS_URL", "")
-		env.MustStringVar(&optCosSecretID, "COS_SECRET_ID", "")
-		env.MustStringVar(&optCosSecretKey, "COS_SECRET_KEY", "")
-	*/
+	env.MustStringVar(&optCosURL, "COS_URL", "")
+	env.MustStringVar(&optCosSecretID, "COS_SECRET_ID", "")
+	env.MustStringVar(&optCosSecretKey, "COS_SECRET_KEY", "")
 
 	if optIndex == "" {
 		panic("missing environment variable: INDEX")
@@ -52,17 +49,15 @@ func load() {
 	if optWorkspace == "" {
 		panic("missing environment variable: WORKSPACE")
 	}
-	/*
-		if optCosURL == "" {
-			panic("missing environment variable: COS_URL")
-		}
-		if optCosSecretID == "" {
-			panic("missing environment variable: COS_SECRET_ID")
-		}
-		if optCosSecretKey == "" {
-			panic("missing environment variable: COS_SECRET_KEY")
-		}
-	*/
+	if optCosURL == "" {
+		panic("missing environment variable: COS_URL")
+	}
+	if optCosSecretID == "" {
+		panic("missing environment variable: COS_SECRET_ID")
+	}
+	if optCosSecretKey == "" {
+		panic("missing environment variable: COS_SECRET_KEY")
+	}
 }
 
 func exit(err *error) {
@@ -74,13 +69,6 @@ func exit(err *error) {
 	}
 }
 
-var (
-	clientES  *elastic.Client
-	clientCOS *cos.Client
-
-	dirWorkspace string
-)
-
 func main() {
 	var err error
 	defer exit(&err)
@@ -88,78 +76,35 @@ func main() {
 	load()
 
 	// setup workspace
-	dirWorkspace = filepath.Join(optWorkspace, optIndex)
-	if err = os.RemoveAll(dirWorkspace); err != nil {
+	localDir := filepath.Join(optWorkspace, optIndex)
+	if err = os.RemoveAll(localDir); err != nil {
 		return
 	}
-	if err = os.MkdirAll(dirWorkspace, 0755); err != nil {
+	if err = os.MkdirAll(localDir, 0755); err != nil {
 		return
 	}
 
 	// setup es
+	var clientES *elastic.Client
 	if clientES, err = elastic.NewClient(elastic.SetURL(optEsURL)); err != nil {
 		return
 	}
 
-	/*
-		// setup cos
-		u, _ := url.Parse(optCosURL)
-		b := &cos.BaseURL{BucketURL: u}
-		clientCOS = cos.NewClient(b, &http.Client{Transport: &cos.AuthorizationTransport{SecretID: optCosSecretID, SecretKey: optCosSecretKey}})
-	*/
+	// setup cos
+	var clientCOS *cos.Client
+	u, _ := url.Parse(optCosURL)
+	b := &cos.BaseURL{BucketURL: u}
+	clientCOS = cos.NewClient(b, &http.Client{Transport: &cos.AuthorizationTransport{SecretID: optCosSecretID, SecretKey: optCosSecretKey}})
 
 	// dump or load
 	switch optAction {
 	case actionDump:
-		err = mainDump()
+		if err = dumpESToLocal(clientES, localDir, optIndex); err != nil {
+			return
+		}
+		if err = dumpLocalToCOS(localDir, clientCOS, optIndex); err != nil {
+			return
+		}
 	case actionLoad:
-		err = mainLoad()
 	}
-}
-
-func mainDump() (err error) {
-	if err = mainDumpToFile(); err != nil {
-		return
-	}
-	return
-}
-
-func mainDumpToFile() (err error) {
-	dw := NewDumpWriter(dirWorkspace)
-	defer dw.Close()
-
-	var total int64
-	if total, err = clientES.Count(optIndex).Do(context.Background()); err != nil {
-		return
-	}
-
-	ss := clientES.Scroll(optIndex).Type("_doc").Scroll("1m").Size(10000)
-	defer ss.Clear(context.Background())
-
-	p := NewProgress(total, fmt.Sprintf("export [%s]", optIndex))
-
-	for {
-		var res *elastic.SearchResult
-		if res, err = ss.Do(context.Background()); err != nil {
-			if err == io.EOF {
-				err = nil
-				break
-			} else {
-				return
-			}
-		}
-		for _, h := range res.Hits.Hits {
-			p.Incr()
-			if h.Source != nil {
-				if err = dw.Append(*h.Source); err != nil {
-					return
-				}
-			}
-		}
-	}
-	return
-}
-
-func mainLoad() (err error) {
-	return
 }
