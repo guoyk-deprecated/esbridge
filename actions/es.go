@@ -18,7 +18,15 @@ func ESOpenIndex(clientES *elastic.Client, index string) (err error) {
 
 func ESTouchIndex(clientES *elastic.Client, index string) (err error) {
 	log.Printf("确保索引存在: %s", index)
-	_, err = clientES.CreateIndex(index).Do(context.Background())
+	var ok bool
+	if ok, err = clientES.IndexExists(index).Do(context.Background()); err != nil {
+		return
+	}
+	if !ok {
+		if _, err = clientES.CreateIndex(index).Do(context.Background()); err != nil {
+			return
+		}
+	}
 	return
 }
 
