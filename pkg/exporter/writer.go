@@ -6,6 +6,10 @@ import (
 	"os"
 )
 
+var (
+	newLine = []byte{'\n'}
+)
+
 type Writer struct {
 	file *os.File
 	zip  *gzip.Writer

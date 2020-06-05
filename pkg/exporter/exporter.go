@@ -9,10 +9,6 @@ const (
 	Ext = ".ndjson.gz"
 )
 
-var (
-	newLine = []byte{'\n'}
-)
-
 // Exporter is NOT concurrent-safe
 type Exporter struct {
 	dir   string
