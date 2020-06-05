@@ -1,71 +1,38 @@
 package main
 
 import (
-	"github.com/guoyk93/env"
+	"flag"
+	"github.com/guoyk93/esbridge/actions"
 	"github.com/olivere/elastic"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
-	"strings"
 )
 
 var (
-	optIndex        string
-	optAction       string
-	optProject      string
-	optWorkspace    string
-	optEsURL        string
-	optCosURL       string
-	optCosSecretID  string
-	optCosSecretKey string
+	conf Conf
+
+	optConf     string
+	optMigrate  string
+	optRestore  string
+	optSearch   string
+	optNoDelete bool
 )
 
-const (
-	actionDump   = "dump"
-	actionLoad   = "load"
-	actionSearch = "search"
-)
+func load() (err error) {
+	flag.StringVar(&optConf, "conf", "/etc/esbridge.yml", "配置文件")
+	flag.StringVar(&optMigrate, "migrate", "", "要迁移的离线索引, ")
+	flag.StringVar(&optRestore, "restore", "", "要恢复的离线索引, 格式为 INDEX/PROJECT")
+	flag.StringVar(&optSearch, "search", "", "要搜索的关键字")
+	flag.BoolVar(&optNoDelete, "no-delete", false, "迁移时不删除索引，仅用于测试")
+	flag.Parse()
 
-func load() {
-	env.MustStringVar(&optIndex, "INDEX", "")
-	env.MustStringVar(&optAction, "ACTION", actionDump)
-	env.MustStringVar(&optProject, "PROJECT", "")
-	env.MustStringVar(&optWorkspace, "WORKSPACE", "")
-	env.MustStringVar(&optEsURL, "ES_URL", "http://127.0.0.1:9200")
-	env.MustStringVar(&optCosURL, "COS_URL", "")
-	env.MustStringVar(&optCosSecretID, "COS_SECRET_ID", "")
-	env.MustStringVar(&optCosSecretKey, "COS_SECRET_KEY", "")
-
-	if optIndex == "" {
-		panic("missing environment variable: INDEX")
+	if conf, err = LoadConf(optConf); err != nil {
+		return
 	}
-	if strings.Contains(optIndex, "*") || strings.Contains(optIndex, "?") {
-		panic("invalid environment variable: INDEX, '*' or '?' is not allowed")
-	}
-	switch optAction {
-	case actionDump:
-	case actionLoad:
-		if optProject == "" {
-			panic("missing environment variable: PROJECT")
-		}
-	case actionSearch:
-	default:
-		panic("invalid environment variable: ACTION")
-	}
-	if optWorkspace == "" {
-		panic("missing environment variable: WORKSPACE")
-	}
-	if optCosURL == "" {
-		panic("missing environment variable: COS_URL")
-	}
-	if optCosSecretID == "" {
-		panic("missing environment variable: COS_SECRET_ID")
-	}
-	if optCosSecretKey == "" {
-		panic("missing environment variable: COS_SECRET_KEY")
-	}
+	return
 }
 
 func exit(err *error) {
@@ -81,45 +48,44 @@ func main() {
 	var err error
 	defer exit(&err)
 
-	load()
-
-	// setup workspace
-	if err = os.RemoveAll(optWorkspace); err != nil {
+	if err = load(); err != nil {
 		return
 	}
-	if err = os.MkdirAll(optWorkspace, 0755); err != nil {
-		return
-	}
-	defer os.RemoveAll(optWorkspace)
 
 	// setup es
 	var clientES *elastic.Client
-	if clientES, err = elastic.NewClient(elastic.SetURL(optEsURL)); err != nil {
+	if clientES, err = elastic.NewClient(elastic.SetURL(conf.Elasticsearch.URL)); err != nil {
 		return
 	}
 
 	// setup cos
 	var clientCOS *cos.Client
-	u, _ := url.Parse(optCosURL)
+	u, _ := url.Parse(conf.COS.URL)
 	b := &cos.BaseURL{BucketURL: u}
-	clientCOS = cos.NewClient(b, &http.Client{Transport: &cos.AuthorizationTransport{SecretID: optCosSecretID, SecretKey: optCosSecretKey}})
+	clientCOS = cos.NewClient(b, &http.Client{Transport: &cos.AuthorizationTransport{SecretID: conf.COS.SecretID, SecretKey: conf.COS.SecretKey}})
 
-	// dump or load
-	switch optAction {
-	case actionDump:
-		if err = taskOpenESIndex(clientES, optIndex); err != nil {
+	switch {
+	case optMigrate != "":
+		if err = actions.WorkspaceSetup(conf.Workspace); err != nil {
 			return
 		}
-		if err = taskExportESToLocal(clientES, optWorkspace, optIndex); err != nil {
+		defer actions.WorkspaceClear(conf.Workspace)
+
+		if err = actions.ESOpenIndex(clientES, optMigrate); err != nil {
 			return
 		}
-		if err = taskExportLocalToCOS(optWorkspace, clientCOS, optIndex); err != nil {
+		if err = actions.ESExportToWorkspace(clientES, conf.Workspace, optMigrate); err != nil {
 			return
 		}
-		if err = taskDeleteESIndex(clientES, optIndex); err != nil {
+		if err = actions.WorkspaceUploadToCOS(conf.Workspace, clientCOS, optMigrate); err != nil {
 			return
 		}
-	case actionLoad:
-	case actionSearch:
+		if !optNoDelete {
+			if err = actions.ESDeleteIndex(clientES, optMigrate); err != nil {
+				return
+			}
+		}
+	case optRestore != "":
+	case optSearch != "":
 	}
 }
