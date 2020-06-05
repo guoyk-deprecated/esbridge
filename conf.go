@@ -8,6 +8,9 @@ import (
 )
 
 type Conf struct {
+	PProf struct {
+		Bind string `yaml:"bind"`
+	} `yaml:"pprof"`
 	Workspace     string `yaml:"workspace"`
 	Elasticsearch struct {
 		URL string `yaml:"url"`
@@ -48,6 +51,9 @@ func LoadConf(file string) (conf Conf, err error) {
 		return
 	}
 	if err = checkFieldStr(&conf.COS.SecretKey, "cos.secret_key"); err != nil {
+		return
+	}
+	if err = checkFieldStr(&conf.PProf.Bind, "pprof.bind"); err != nil {
 		return
 	}
 	return

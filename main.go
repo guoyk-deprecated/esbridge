@@ -12,6 +12,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	_ "net/http/pprof"
 )
 
 var (
@@ -66,6 +68,11 @@ func main() {
 	if err = load(); err != nil {
 		return
 	}
+
+	// pprof
+	go func() {
+		log.Print(http.ListenAndServe(conf.PProf.Bind, nil))
+	}()
 
 	// setup es
 	var clientES *elastic.Client
