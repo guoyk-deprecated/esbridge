@@ -40,7 +40,7 @@ func WorkspaceUploadToCOS(dir string, clientCOS *cos.Client, index string) (err 
 		return err
 	}
 
-	p := progress.NewProgress(int64(len(fis)), fmt.Sprintf("local to cos [%s]", index))
+	p := progress.NewProgress(int64(len(fis)), fmt.Sprintf("导出索引到腾讯云存储: %s", index))
 	for _, fi := range fis {
 		p.Incr()
 		if !strings.HasSuffix(fi.Name(), exporter.Ext) {

@@ -66,7 +66,7 @@ func ESExportToWorkspace(clientES *elastic.Client, dir, index string, level int)
 	ss := clientES.Scroll(index).Type("_doc").Scroll("1m").Size(10000)
 	defer ss.Clear(context.Background())
 
-	p := progress.NewProgress(total, fmt.Sprintf("导出索引到本地 [%s]", index))
+	p := progress.NewProgress(total, fmt.Sprintf("导出索引到本地文件: %s", index))
 
 	for {
 		var res *elastic.SearchResult
