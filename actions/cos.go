@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/guoyk93/esbridge/pkg/count_reader"
 	"github.com/guoyk93/esbridge/pkg/exporter"
@@ -84,7 +85,8 @@ func COSImportToES(clientCOS *cos.Client, index, project string, clientES *elast
 				}
 				failed := res.Failed()
 				if len(failed) > 0 {
-					err = fmt.Errorf("存在失败的索引请求: %#v", failed[0])
+					buf, _ := json.MarshalIndent(failed[0], "", "  ")
+					err = fmt.Errorf("存在失败的索引请求: %s", string(buf))
 					return
 				}
 			}
