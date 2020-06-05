@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 	"fmt"
+	"github.com/guoyk93/esbridge/pkg/exporter"
 	"github.com/guoyk93/esbridge/pkg/progress"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"io/ioutil"
@@ -42,7 +43,7 @@ func WorkspaceUploadToCOS(dir string, clientCOS *cos.Client, index string) (err 
 	p := progress.NewProgress(int64(len(fis)), fmt.Sprintf("local to cos [%s]", index))
 	for _, fi := range fis {
 		p.Incr()
-		if !strings.HasSuffix(fi.Name(), ".ndjson.gz") {
+		if !strings.HasSuffix(fi.Name(), exporter.Ext) {
 			continue
 		}
 		if _, _, err = clientCOS.Object.Upload(context.Background(), index+"/"+fi.Name(), filepath.Join(dir, fi.Name()), &cos.MultiUploadOptions{

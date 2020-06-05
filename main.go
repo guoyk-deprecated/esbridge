@@ -87,5 +87,8 @@ func main() {
 		}
 	case optRestore != "":
 	case optSearch != "":
+		if err = actions.COSSearch(clientCOS, optSearch); err != nil {
+			return
+		}
 	}
 }

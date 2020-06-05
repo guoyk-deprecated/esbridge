@@ -7,6 +7,10 @@ import (
 	"path/filepath"
 )
 
+const (
+	Ext = ".ndjson.gz"
+)
+
 var (
 	newLine = []byte{'\n'}
 )
@@ -33,7 +37,7 @@ func (x *Exporter) Append(rm json.RawMessage) (err error) {
 func (x *Exporter) append(rm json.RawMessage, p string) (err error) {
 	f := x.files[p]
 	if f == nil {
-		if f, err = os.OpenFile(filepath.Join(x.dir, p+".ndjson.gz"), os.O_CREATE|os.O_RDWR, 0640); err != nil {
+		if f, err = os.OpenFile(filepath.Join(x.dir, p+Ext), os.O_CREATE|os.O_RDWR, 0640); err != nil {
 			return
 		}
 		x.files[p] = f
