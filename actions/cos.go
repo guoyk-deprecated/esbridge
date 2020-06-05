@@ -24,6 +24,9 @@ func COSSearch(clientCOS *cos.Client, keyword string) (err error) {
 				continue
 			}
 			p := strings.TrimPrefix(strings.TrimSuffix(o.Key, exporter.Ext), "/")
+			if !strings.Contains(p, keyword) {
+				continue
+			}
 			ss := strings.Split(p, "/")
 			if len(ss) != 2 {
 				log.Printf("发现未知文件: %s", o.Key)
