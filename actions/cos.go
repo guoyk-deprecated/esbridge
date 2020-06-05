@@ -84,7 +84,7 @@ func COSImportToES(clientCOS *cos.Client, index, project string, clientES *elast
 				}
 				failed := res.Failed()
 				if len(failed) > 0 {
-					err = fmt.Errorf("存在失败的索引请求: %+v", failed[0])
+					err = fmt.Errorf("存在失败的索引请求: %#v", failed[0])
 					return
 				}
 			}
