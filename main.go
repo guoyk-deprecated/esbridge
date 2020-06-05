@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -80,29 +81,33 @@ func main() {
 
 	switch {
 	case optMigrate != "":
-		if err = checkIndex(optMigrate); err != nil {
+		index := optMigrate
+
+		if err = checkIndex(index); err != nil {
 			return
 		}
 
-		if err = actions.WorkspaceSetup(conf.Workspace); err != nil {
+		workspace := filepath.Join(conf.Workspace, index)
+
+		if err = actions.WorkspaceSetup(workspace); err != nil {
 			return
 		}
-		defer actions.WorkspaceClear(conf.Workspace)
+		defer actions.WorkspaceClear(workspace)
 
-		if err = actions.ESOpenIndex(clientES, optMigrate); err != nil {
-			return
-		}
-
-		if err = actions.ESExportToWorkspace(clientES, conf.Workspace, optMigrate); err != nil {
+		if err = actions.ESOpenIndex(clientES, index); err != nil {
 			return
 		}
 
-		if err = actions.WorkspaceUploadToCOS(conf.Workspace, clientCOS, optMigrate); err != nil {
+		if err = actions.ESExportToWorkspace(clientES, workspace, index); err != nil {
+			return
+		}
+
+		if err = actions.WorkspaceUploadToCOS(workspace, clientCOS, index); err != nil {
 			return
 		}
 
 		if !optNoDelete {
-			if err = actions.ESDeleteIndex(clientES, optMigrate); err != nil {
+			if err = actions.ESDeleteIndex(clientES, index); err != nil {
 				return
 			}
 		}
@@ -118,7 +123,7 @@ func main() {
 			return
 		}
 
-		if err = checkIndex(optMigrate); err != nil {
+		if err = checkIndex(index); err != nil {
 			return
 		}
 

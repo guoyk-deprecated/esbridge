@@ -44,7 +44,7 @@ func (x *Exporter) append(rm json.RawMessage, p string) (err error) {
 	}
 	z := x.zips[p]
 	if z == nil {
-		if z, err = gzip.NewWriterLevel(f, gzip.BestCompression); err != nil {
+		if z, err = gzip.NewWriterLevel(f, gzip.DefaultCompression); err != nil {
 			return
 		}
 		x.zips[p] = z
