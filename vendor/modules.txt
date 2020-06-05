@@ -4,9 +4,6 @@
 ## explicit
 # github.com/google/go-querystring v1.0.0
 github.com/google/go-querystring/query
-# github.com/guoyk93/env v1.0.0
-## explicit
-github.com/guoyk93/env
 # github.com/mailru/easyjson v0.7.1
 ## explicit
 github.com/mailru/easyjson
@@ -26,3 +23,6 @@ github.com/pkg/errors
 # github.com/tencentyun/cos-go-sdk-v5 v0.7.6
 ## explicit
 github.com/tencentyun/cos-go-sdk-v5
+# gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
+## explicit
+gopkg.in/yaml.v3
