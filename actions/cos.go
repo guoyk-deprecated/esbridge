@@ -109,7 +109,7 @@ func COSImportToES(clientCOS *cos.Client, index, project string, clientES *elast
 			if bs == nil {
 				bs = clientES.Bulk()
 			}
-			bs.Add(elastic.NewBulkIndexRequest().Index(index).Type("_doc").Doc(buf))
+			bs.Add(elastic.NewBulkIndexRequest().Index(index).Type("_doc").Doc(json.RawMessage(buf)))
 		}
 
 		if err = commit(false); err != nil {
