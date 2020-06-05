@@ -5,7 +5,6 @@ import (
 	"github.com/guoyk93/esbridge/pkg/exporter"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"log"
-	"path"
 	"strings"
 )
 
@@ -15,17 +14,22 @@ func COSSearch(clientCOS *cos.Client, keyword string) (err error) {
 	var res *cos.BucketGetResult
 	for {
 		if res, _, err = clientCOS.Bucket.Get(context.Background(), &cos.BucketGetOptions{
-			Marker:  marker,
-			MaxKeys: 5,
+			Marker: marker,
 		}); err != nil {
 			return
 		}
 		for _, o := range res.Contents {
-			if strings.HasSuffix(o.Key, exporter.Ext) {
-				p := strings.TrimPrefix(strings.TrimSuffix(o.Key, exporter.Ext), "/")
-				dir, file := path.Split(p)
-				log.Printf("找到 INDEX = %s, PROJECT = %s", dir, file)
+			if !strings.HasSuffix(o.Key, exporter.Ext) {
+				log.Printf("发现未知文件: %s", o.Key)
+				continue
 			}
+			p := strings.TrimPrefix(strings.TrimSuffix(o.Key, exporter.Ext), "/")
+			ss := strings.Split(p, "/")
+			if len(ss) != 2 {
+				log.Printf("发现未知文件: %s", o.Key)
+				continue
+			}
+			log.Printf("找到 INDEX = %s, PROJECT = %s", ss[0], ss[1])
 		}
 		if res.IsTruncated {
 			marker = res.NextMarker
