@@ -1,6 +1,7 @@
 package main
 
 import (
+	"compress/gzip"
 	"errors"
 	"flag"
 	"github.com/guoyk93/esbridge/actions"
@@ -24,6 +25,9 @@ var (
 	optRestore  string
 	optSearch   string
 	optNoDelete bool
+
+	optBestCompression bool
+	optBestSpeed       bool
 )
 
 func load() (err error) {
@@ -32,6 +36,8 @@ func load() (err error) {
 	flag.StringVar(&optRestore, "restore", "", "要恢复的离线索引, 格式为 INDEX/PROJECT")
 	flag.StringVar(&optSearch, "search", "", "要搜索的关键字")
 	flag.BoolVar(&optNoDelete, "no-delete", false, "迁移时不删除索引，仅用于测试")
+	flag.BoolVar(&optBestCompression, "best-compression", false, "最佳压缩率")
+	flag.BoolVar(&optBestSpeed, "best-speed", false, "最佳压缩速度")
 	flag.Parse()
 
 	optConf = strings.TrimSpace(optConf)
@@ -105,7 +111,15 @@ func main() {
 			return
 		}
 
-		if err = actions.ESExportToWorkspace(clientES, workspace, index); err != nil {
+		level := gzip.DefaultCompression
+
+		if optBestCompression {
+			level = gzip.BestCompression
+		} else if optBestSpeed {
+			level = gzip.BestSpeed
+		}
+
+		if err = actions.ESExportToWorkspace(clientES, workspace, index, level); err != nil {
 			return
 		}
 

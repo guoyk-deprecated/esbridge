@@ -14,13 +14,13 @@ type Writer struct {
 	err  error
 }
 
-func NewWriter(filename string) (w *Writer, err error) {
+func NewWriter(filename string, level int) (w *Writer, err error) {
 	var file *os.File
 	if file, err = os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0640); err != nil {
 		return
 	}
 	var zip *gzip.Writer
-	if zip, err = gzip.NewWriterLevel(file, gzip.BestCompression); err != nil {
+	if zip, err = gzip.NewWriterLevel(file, level); err != nil {
 		_ = file.Close()
 		return
 	}

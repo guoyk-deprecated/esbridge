@@ -15,8 +15,9 @@ var (
 
 // Exporter is NOT concurrent-safe
 type Exporter struct {
-	dir string
-	ws  map[string]*Writer
+	dir   string
+	level int
+	ws    map[string]*Writer
 }
 
 func (x *Exporter) Append(rm json.RawMessage) (err error) {
@@ -34,7 +35,7 @@ func (x *Exporter) Append(rm json.RawMessage) (err error) {
 func (x *Exporter) append(rm json.RawMessage, p string) (err error) {
 	w := x.ws[p]
 	if w == nil {
-		if w, err = NewWriter(filepath.Join(x.dir, p+Ext)); err != nil {
+		if w, err = NewWriter(filepath.Join(x.dir, p+Ext), x.level); err != nil {
 			return
 		}
 		x.ws[p] = w
@@ -54,9 +55,10 @@ func (x *Exporter) Close() (err error) {
 	return
 }
 
-func NewExporter(dir string) *Exporter {
+func NewExporter(dir string, level int) *Exporter {
 	return &Exporter{
-		dir: dir,
-		ws:  make(map[string]*Writer),
+		dir:   dir,
+		ws:    make(map[string]*Writer),
+		level: level,
 	}
 }
