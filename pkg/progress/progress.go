@@ -13,7 +13,7 @@ func (p *Progress) Set(c int64) {
 	p.count = c
 	np := p.count * 100 / p.total
 	if np != p.progress {
-		log.Printf("%s [%02d%%]", p.title, np)
+		log.Printf("%s [%3d%%]", p.title, np)
 	}
 	p.progress = np
 }
