@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"github.com/guoyk93/esbridge/actions"
 	"github.com/olivere/elastic"
@@ -9,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 )
 
 var (
@@ -33,6 +35,13 @@ func load() (err error) {
 		return
 	}
 	return
+}
+
+func checkIndex(index string) error {
+	if strings.Contains(index, "*") || strings.Contains(index, "?") {
+		return errors.New("不允许在索引名中包含 '*' 或者 '?'")
+	}
+	return nil
 }
 
 func exit(err *error) {
@@ -66,6 +75,10 @@ func main() {
 
 	switch {
 	case optMigrate != "":
+		if err = checkIndex(optMigrate); err != nil {
+			return
+		}
+
 		if err = actions.WorkspaceSetup(conf.Workspace); err != nil {
 			return
 		}
@@ -74,18 +87,49 @@ func main() {
 		if err = actions.ESOpenIndex(clientES, optMigrate); err != nil {
 			return
 		}
+
 		if err = actions.ESExportToWorkspace(clientES, conf.Workspace, optMigrate); err != nil {
 			return
 		}
+
 		if err = actions.WorkspaceUploadToCOS(conf.Workspace, clientCOS, optMigrate); err != nil {
 			return
 		}
+
 		if !optNoDelete {
 			if err = actions.ESDeleteIndex(clientES, optMigrate); err != nil {
 				return
 			}
 		}
 	case optRestore != "":
+		ss := strings.Split(optRestore, "/")
+		if len(ss) != 2 {
+			err = errors.New("错误的参数")
+			return
+		}
+		index, project := ss[0], ss[1]
+
+		if err = checkIndex(optMigrate); err != nil {
+			return
+		}
+
+		if err = actions.COSCheckFile(clientCOS, index, project); err != nil {
+			return
+		}
+
+		if err = actions.ESTouchIndex(clientES, index); err != nil {
+			return
+		}
+
+		if err = actions.ESDisableRefresh(clientES, index); err != nil {
+			return
+		}
+		defer actions.ESEnableRefresh(clientES, index)
+
+		if err = actions.COSImportToES(clientCOS, index, project, clientES); err != nil {
+			return
+		}
+
 	case optSearch != "":
 		if err = actions.COSSearch(clientCOS, optSearch); err != nil {
 			return

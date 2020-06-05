@@ -1,9 +1,17 @@
 package actions
 
 import (
+	"bufio"
+	"bytes"
+	"compress/gzip"
 	"context"
+	"fmt"
+	"github.com/guoyk93/esbridge/pkg/count_reader"
 	"github.com/guoyk93/esbridge/pkg/exporter"
+	"github.com/guoyk93/esbridge/pkg/progress"
+	"github.com/olivere/elastic"
 	"github.com/tencentyun/cos-go-sdk-v5"
+	"io"
 	"log"
 	"strings"
 )
@@ -40,4 +48,78 @@ func COSSearch(clientCOS *cos.Client, keyword string) (err error) {
 			return
 		}
 	}
+}
+
+func COSCheckFile(clientCOS *cos.Client, index, project string) (err error) {
+	log.Printf("检查腾讯云存储文件: INDEX = %s, PROJECT = %s", index, project)
+	_, err = clientCOS.Object.Head(context.Background(), index+"/"+project+exporter.Ext, nil)
+	return
+}
+
+func COSImportToES(clientCOS *cos.Client, index, project string, clientES *elastic.Client) (err error) {
+	log.Printf("从腾讯云存储恢复: INDEX = %s, PROJECT = %s", index, project)
+	var res *cos.Response
+	if res, err = clientCOS.Object.Get(context.Background(), index+"/"+project+exporter.Ext, nil); err != nil {
+		return
+	}
+	defer res.Body.Close()
+
+	p := progress.NewProgress(res.ContentLength, fmt.Sprintf("从 COS 导入索引 [%s (%s)]", index, project))
+
+	cr := count_reader.New(res.Body)
+	var zr *gzip.Reader
+	if zr, err = gzip.NewReader(cr); err != nil {
+		return
+	}
+	br := bufio.NewReader(zr)
+
+	var bs *elastic.BulkService
+
+	commit := func(force bool) (err error) {
+		if bs != nil {
+			if force || bs.NumberOfActions() > 5000 {
+				var res *elastic.BulkResponse
+				if res, err = bs.Do(context.Background()); err != nil {
+					return
+				}
+				failed := res.Failed()
+				if len(failed) > 0 {
+					err = fmt.Errorf("存在失败的索引请求: %+v", failed[0])
+					return
+				}
+			}
+		}
+		return
+	}
+
+	var buf []byte
+	for {
+		if buf, err = br.ReadBytes('\n'); err != nil {
+			if err == io.EOF {
+				err = nil
+			}
+			break
+		}
+
+		buf = bytes.TrimSpace(buf)
+
+		if len(buf) > 0 {
+			if bs == nil {
+				bs = clientES.Bulk()
+			}
+			bs.Add(elastic.NewBulkIndexRequest().Index(index).Type("_doc").Doc(buf))
+		}
+
+		if err = commit(false); err != nil {
+			return
+		}
+
+		p.Set(cr.Count())
+	}
+
+	if err = commit(true); err != nil {
+		return
+	}
+
+	return
 }

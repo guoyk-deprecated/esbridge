@@ -16,6 +16,28 @@ func ESOpenIndex(clientES *elastic.Client, index string) (err error) {
 	return
 }
 
+func ESTouchIndex(clientES *elastic.Client, index string) (err error) {
+	log.Printf("确保索引存在: %s", index)
+	_, err = clientES.CreateIndex(index).Do(context.Background())
+	return
+}
+
+func ESDisableRefresh(clientES *elastic.Client, index string) (err error) {
+	log.Printf("关闭索引刷新，为写入大量数据做准备: %s", index)
+	_, err = clientES.IndexPutSettings(index).FlatSettings(true).BodyJson(map[string]interface{}{
+		"index.refresh_interval": "-1",
+	}).Do(context.Background())
+	return
+}
+
+func ESEnableRefresh(clientES *elastic.Client, index string) (err error) {
+	log.Printf("恢复索引刷新: %s", index)
+	_, err = clientES.IndexPutSettings(index).FlatSettings(true).BodyJson(map[string]interface{}{
+		"index.refresh_interval": "10s",
+	}).Do(context.Background())
+	return
+}
+
 func ESDeleteIndex(clientES *elastic.Client, index string) (err error) {
 	log.Printf("删除索引: %s", index)
 	_, err = clientES.DeleteIndex(index).Do(context.Background())
@@ -36,7 +58,7 @@ func ESExportToWorkspace(clientES *elastic.Client, dir, index string) (err error
 	ss := clientES.Scroll(index).Type("_doc").Scroll("1m").Size(10000)
 	defer ss.Clear(context.Background())
 
-	p := progress.NewProgress(total, fmt.Sprintf("es to local [%s]", index))
+	p := progress.NewProgress(total, fmt.Sprintf("导出索引到本地 [%s]", index))
 
 	for {
 		var res *elastic.SearchResult
