@@ -58,14 +58,14 @@ func COSCheckFile(clientCOS *cos.Client, index, project string) (err error) {
 }
 
 func COSImportToES(clientCOS *cos.Client, index, project string, clientES *elastic.Client) (err error) {
-	log.Printf("从腾讯云存储恢复: INDEX = %s, PROJECT = %s", index, project)
+	log.Printf("从腾讯云存储恢复索引: %s (%s)", index, project)
 	var res *cos.Response
 	if res, err = clientCOS.Object.Get(context.Background(), index+"/"+project+exporter.Ext, nil); err != nil {
 		return
 	}
 	defer res.Body.Close()
 
-	p := progress.NewProgress(res.ContentLength, fmt.Sprintf("从 COS 导入索引 [%s (%s)]", index, project))
+	p := progress.NewProgress(res.ContentLength, fmt.Sprintf("从腾讯云存储恢复索引: %s (%s)", index, project))
 
 	cr := count_reader.New(res.Body)
 	var zr *gzip.Reader
