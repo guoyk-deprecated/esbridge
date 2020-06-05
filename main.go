@@ -31,6 +31,11 @@ func load() (err error) {
 	flag.BoolVar(&optNoDelete, "no-delete", false, "迁移时不删除索引，仅用于测试")
 	flag.Parse()
 
+	optConf = strings.TrimSpace(optConf)
+	optMigrate = strings.TrimSpace(optMigrate)
+	optRestore = strings.TrimSpace(optRestore)
+	optSearch = strings.TrimSpace(optSearch)
+
 	if conf, err = LoadConf(optConf); err != nil {
 		return
 	}
@@ -104,10 +109,14 @@ func main() {
 	case optRestore != "":
 		ss := strings.Split(optRestore, "/")
 		if len(ss) != 2 {
-			err = errors.New("错误的参数")
+			err = errors.New("参数错误")
 			return
 		}
-		index, project := ss[0], ss[1]
+		index, project := strings.TrimSpace(ss[0]), strings.TrimSpace(ss[1])
+		if index == "" || project == "" {
+			err = errors.New("参数缺失")
+			return
+		}
 
 		if err = checkIndex(optMigrate); err != nil {
 			return
