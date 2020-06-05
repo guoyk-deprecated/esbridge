@@ -1,9 +1,7 @@
 package exporter
 
 import (
-	"compress/gzip"
 	"encoding/json"
-	"os"
 	"path/filepath"
 )
 
@@ -17,9 +15,8 @@ var (
 
 // Exporter is NOT concurrent-safe
 type Exporter struct {
-	dir   string
-	files map[string]*os.File
-	zips  map[string]*gzip.Writer
+	dir string
+	ws  map[string]*Writer
 }
 
 func (x *Exporter) Append(rm json.RawMessage) (err error) {
@@ -35,41 +32,23 @@ func (x *Exporter) Append(rm json.RawMessage) (err error) {
 }
 
 func (x *Exporter) append(rm json.RawMessage, p string) (err error) {
-	f := x.files[p]
-	if f == nil {
-		if f, err = os.OpenFile(filepath.Join(x.dir, p+Ext), os.O_CREATE|os.O_RDWR, 0640); err != nil {
+	w := x.ws[p]
+	if w == nil {
+		if w, err = NewWriter(filepath.Join(x.dir, p+Ext)); err != nil {
 			return
 		}
-		x.files[p] = f
+		x.ws[p] = w
 	}
-	z := x.zips[p]
-	if z == nil {
-		if z, err = gzip.NewWriterLevel(f, gzip.DefaultCompression); err != nil {
-			return
-		}
-		x.zips[p] = z
-	}
-	if _, err = z.Write(rm); err != nil {
+	if err = w.Write(rm); err != nil {
 		return
-	}
-	if _, err = z.Write(newLine); err != nil {
-		return err
 	}
 	return
 }
 
 func (x *Exporter) Close() (err error) {
-	// close zips
-	zips := x.zips
-	x.zips = nil
-	for _, z := range zips {
-		_ = z.Close()
-	}
-
-	// close files
-	files := x.files
-	x.files = nil
-	for _, f := range files {
+	ws := x.ws
+	x.ws = make(map[string]*Writer)
+	for _, f := range ws {
 		_ = f.Close()
 	}
 	return
@@ -77,8 +56,7 @@ func (x *Exporter) Close() (err error) {
 
 func NewExporter(dir string) *Exporter {
 	return &Exporter{
-		dir:   dir,
-		files: make(map[string]*os.File),
-		zips:  make(map[string]*gzip.Writer),
+		dir: dir,
+		ws:  make(map[string]*Writer),
 	}
 }
