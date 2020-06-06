@@ -23,6 +23,7 @@ var (
 	optRestore  string
 	optSearch   string
 	optNoDelete bool
+	optBulk     int
 
 	optBestCompression bool
 	optBestSpeed       bool
@@ -33,6 +34,7 @@ func load() (err error) {
 	flag.StringVar(&optMigrate, "migrate", "", "要迁移的离线索引, ")
 	flag.StringVar(&optRestore, "restore", "", "要恢复的离线索引, 格式为 INDEX/PROJECT")
 	flag.StringVar(&optSearch, "search", "", "要搜索的关键字")
+	flag.IntVar(&optBulk, "bulk", 2000, "导出时的批量数")
 	flag.BoolVar(&optNoDelete, "no-delete", false, "迁移时不删除索引，仅用于测试")
 	flag.BoolVar(&optBestCompression, "best-compression", false, "最佳压缩率")
 	flag.BoolVar(&optBestSpeed, "best-speed", false, "最佳压缩速度")
@@ -109,7 +111,7 @@ func main() {
 			return
 		}
 
-		if err = ElasticsearchExportToWorkspace(conf.Elasticsearch.URL, workspace, index); err != nil {
+		if err = ElasticsearchExportToWorkspace(conf.Elasticsearch.URL, workspace, index, optBulk); err != nil {
 			return
 		}
 

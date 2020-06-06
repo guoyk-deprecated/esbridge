@@ -31,6 +31,8 @@ type ExporterOptions struct {
 	Dir string
 	// index to exportSection
 	Index string
+	// bulk
+	Bulk int
 	// section key for term aggregation and term search
 	SectionKey string
 	// concurrency
@@ -135,7 +137,7 @@ func (e *exporter) exportRawData(ctx context.Context, section string) (err error
 	// create scroll service
 	scroll := e.c.Scroll(e.opts.Index).Pretty(false).Scroll("5m").Query(
 		elastic.NewTermQuery(e.opts.SectionKey, section),
-	).Size(2000)
+	).Size(e.opts.Bulk)
 	// progress
 	var p progress.Progress
 	// scroll all documents within section
@@ -240,6 +242,9 @@ func NewExporter(opts ExporterOptions) (Exporter, error) {
 	}
 	if opts.SectionKey == "" {
 		return nil, errors.New("missing opts.SectionKey")
+	}
+	if opts.Bulk <= 0 {
+		opts.Bulk = 2000
 	}
 	if opts.Concurrency <= 0 {
 		opts.Concurrency = 3

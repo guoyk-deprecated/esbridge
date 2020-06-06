@@ -50,7 +50,7 @@ func ElasticsearchDeleteIndex(clientES *elastic.Client, index string) (err error
 	return
 }
 
-func ElasticsearchExportToWorkspace(url, dir, index string) (err error) {
+func ElasticsearchExportToWorkspace(url, dir, index string, bulk int) (err error) {
 	log.Printf("导出索引到本地文件: %s", index)
 	var e esndjson.Exporter
 	if e, err = esndjson.NewExporter(esndjson.ExporterOptions{
@@ -58,6 +58,7 @@ func ElasticsearchExportToWorkspace(url, dir, index string) (err error) {
 		Sniff:         false,
 		Dir:           dir,
 		Index:         index,
+		Bulk:          bulk,
 		SectionKey:    "project",
 		Concurrency:   3,
 		CompressLevel: gzip.BestCompression,
