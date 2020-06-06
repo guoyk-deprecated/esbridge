@@ -15,7 +15,6 @@
 # vendor/
 
 # testdata
-*.ndjson
 *.ndjson.gz
 
 # GoLand

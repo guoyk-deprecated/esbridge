@@ -1,10 +1,10 @@
 package main
 
 import (
+	"compress/gzip"
 	"errors"
 	"flag"
 	"github.com/guoyk93/esbridge/actions"
-	gzip "github.com/klauspost/pgzip"
 	"github.com/olivere/elastic"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"log"
@@ -119,11 +119,7 @@ func main() {
 			level = gzip.BestSpeed
 		}
 
-		if err = actions.ESExportToWorkspace(clientES, workspace, index); err != nil {
-			return
-		}
-
-		if err = actions.WorkspaceGzipAll(workspace, level); err != nil {
+		if err = actions.ESExportToWorkspace(clientES, workspace, index, level); err != nil {
 			return
 		}
 
