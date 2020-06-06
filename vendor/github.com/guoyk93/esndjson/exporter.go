@@ -94,7 +94,6 @@ func (e *exporter) deleteRawData(ctx context.Context, section string) (err error
 }
 
 func (e *exporter) compressRawData(ctx context.Context, section string) (err error) {
-	e.opts.Logger("compressing: %s", section)
 	var file *os.File
 	if file, err = os.Open(filepath.Join(e.opts.Dir, section+ExtNDJSON)); err != nil {
 		return
@@ -162,18 +161,20 @@ func (e *exporter) exportSection(ctx context.Context, section string, tokens cha
 	var err error
 	defer func() { results <- err }()
 
-	e.opts.Logger("exporting: %s", section)
-
 	// borrow and return token for concurrency control
 	<-tokens
 	defer func() { tokens <- true }()
 
+	e.opts.Logger("exporting: %s", section)
 	if err = e.exportRawData(ctx, section); err != nil {
 		return
 	}
+	e.opts.Logger("exported: %s", section)
+	e.opts.Logger("compressing: %s", section)
 	if err = e.compressRawData(ctx, section); err != nil {
 		return
 	}
+	e.opts.Logger("compressed: %s", section)
 	if err = e.deleteRawData(ctx, section); err != nil {
 		return
 	}
