@@ -1,7 +1,6 @@
 package exporter
 
 import (
-	"compress/gzip"
 	"errors"
 	"os"
 )
@@ -12,27 +11,20 @@ var (
 
 type Writer struct {
 	file *os.File
-	zip  *gzip.Writer
 	data chan []byte
 	done chan interface{}
 	err  error
 }
 
-func NewWriter(filename string, level int) (w *Writer, err error) {
+func NewWriter(filename string) (w *Writer, err error) {
 	var file *os.File
 	if file, err = os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0640); err != nil {
-		return
-	}
-	var zip *gzip.Writer
-	if zip, err = gzip.NewWriterLevel(file, level); err != nil {
-		_ = file.Close()
 		return
 	}
 
 	w = &Writer{
 		file: file,
-		zip:  zip,
-		data: make(chan []byte),
+		data: make(chan []byte, 100),
 		done: make(chan interface{}),
 	}
 	go w.run()
@@ -54,11 +46,14 @@ func (w *Writer) Write(p []byte) error {
 func (w *Writer) run() {
 	var err error
 	for buf := range w.data {
-		if _, err = w.zip.Write(buf); err != nil {
+		if buf == nil {
+			break
+		}
+		if _, err = w.file.Write(buf); err != nil {
 			w.err = err
 			continue
 		}
-		if _, err = w.zip.Write(newLine); err != nil {
+		if _, err = w.file.Write(newLine); err != nil {
 			w.err = err
 			continue
 		}
@@ -67,13 +62,11 @@ func (w *Writer) run() {
 }
 
 func (w *Writer) Close() (err error) {
-	close(w.data)
+	w.data <- nil
 	<-w.done
 
-	if err = w.zip.Close(); err != nil {
-		_ = w.file.Close()
+	if err = w.file.Close(); err != nil {
 		return
 	}
-	err = w.file.Close()
 	return
 }

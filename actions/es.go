@@ -52,10 +52,10 @@ func ESDeleteIndex(clientES *elastic.Client, index string) (err error) {
 	return
 }
 
-func ESExportToWorkspace(clientES *elastic.Client, dir, index string, level int) (err error) {
+func ESExportToWorkspace(clientES *elastic.Client, dir, index string) (err error) {
 	log.Printf("导出索引到本地文件: %s", index)
 
-	x := exporter.NewExporter(dir, level)
+	x := exporter.NewExporter(dir)
 	defer x.Close()
 
 	var total int64
