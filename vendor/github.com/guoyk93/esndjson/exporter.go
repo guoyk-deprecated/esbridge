@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -128,7 +129,7 @@ func (e *exporter) exportRawData(ctx context.Context, section string) (err error
 	// create scroll service
 	scroll := e.c.Scroll(e.opts.Index).Pretty(false).Scroll("5m").Query(
 		elastic.NewTermQuery(e.opts.SectionKey, section),
-	).Size(10000)
+	).Size(2000)
 	// scroll all documents within section
 	var res *elastic.SearchResult
 	for {
@@ -157,6 +158,18 @@ func (e *exporter) exportRawData(ctx context.Context, section string) (err error
 	return
 }
 
+func (e *exporter) logMemoryUsageAndGC(label string) {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	e.opts.Logger("%s: Alloc = %v MiB, Sys = %v MiB, NumGC = %v",
+		label,
+		m.Alloc/1024/1024,
+		m.Sys/1024/1024,
+		m.NumGC,
+	)
+	runtime.GC()
+}
+
 func (e *exporter) exportSection(ctx context.Context, section string, tokens chan bool, results chan error) {
 	var err error
 	defer func() { results <- err }()
@@ -169,11 +182,13 @@ func (e *exporter) exportSection(ctx context.Context, section string, tokens cha
 	if err = e.exportRawData(ctx, section); err != nil {
 		return
 	}
+	e.logMemoryUsageAndGC("export")
 	e.opts.Logger("exported: %s", section)
 	e.opts.Logger("compressing: %s", section)
 	if err = e.compressRawData(ctx, section); err != nil {
 		return
 	}
+	e.logMemoryUsageAndGC("compress")
 	e.opts.Logger("compressed: %s", section)
 	if err = e.deleteRawData(ctx, section); err != nil {
 		return
