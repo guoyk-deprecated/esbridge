@@ -1,10 +1,11 @@
-package actions
+package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"github.com/guoyk93/esbridge/pkg/exporter"
 	"github.com/guoyk93/esbridge/pkg/progress"
+	"github.com/guoyk93/esndjson"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"io/ioutil"
 	"log"
@@ -40,11 +41,14 @@ func WorkspaceUploadToCOS(dir string, clientCOS *cos.Client, index string) (err 
 		return err
 	}
 
+	uploaded := 0
+
 	p := progress.NewProgress(int64(len(fis)), fmt.Sprintf("导出索引到腾讯云存储: %s", index))
 	for _, fi := range fis {
 		p.Incr()
-		if !strings.HasSuffix(fi.Name(), exporter.Ext) {
-			continue
+		if !strings.HasSuffix(fi.Name(), esndjson.ExtNDJSONGzipped) {
+			err = fmt.Errorf("发现未知文件: %s", fi.Name())
+			return
 		}
 		if _, _, err = clientCOS.Object.Upload(context.Background(), index+"/"+fi.Name(), filepath.Join(dir, fi.Name()), &cos.MultiUploadOptions{
 			OptIni: &cos.InitiateMultipartUploadOptions{
@@ -53,7 +57,14 @@ func WorkspaceUploadToCOS(dir string, clientCOS *cos.Client, index string) (err 
 		}); err != nil {
 			return
 		}
+
+		uploaded++
 		log.Printf("上传完成: %s", fi.Name())
+	}
+
+	if uploaded == 0 {
+		err = errors.New("没有可上传的文件")
+		return
 	}
 	return
 }

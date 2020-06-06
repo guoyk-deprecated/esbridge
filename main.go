@@ -1,10 +1,8 @@
 package main
 
 import (
-	"compress/gzip"
 	"errors"
 	"flag"
-	"github.com/guoyk93/esbridge/actions"
 	"github.com/olivere/elastic"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"log"
@@ -102,33 +100,25 @@ func main() {
 
 		workspace := filepath.Join(conf.Workspace, index)
 
-		if err = actions.WorkspaceSetup(workspace); err != nil {
+		if err = WorkspaceSetup(workspace); err != nil {
 			return
 		}
-		defer actions.WorkspaceClear(workspace)
+		defer WorkspaceClear(workspace)
 
-		if err = actions.ESOpenIndex(clientES, index); err != nil {
-			return
-		}
-
-		level := gzip.DefaultCompression
-
-		if optBestCompression {
-			level = gzip.BestCompression
-		} else if optBestSpeed {
-			level = gzip.BestSpeed
-		}
-
-		if err = actions.ESExportToWorkspace(clientES, workspace, index, level); err != nil {
+		if err = ElasticsearchOpenIndex(clientES, index); err != nil {
 			return
 		}
 
-		if err = actions.WorkspaceUploadToCOS(workspace, clientCOS, index); err != nil {
+		if err = ElasticsearchExportToWorkspace(conf.Elasticsearch.URL, workspace, index); err != nil {
+			return
+		}
+
+		if err = WorkspaceUploadToCOS(workspace, clientCOS, index); err != nil {
 			return
 		}
 
 		if !optNoDelete {
-			if err = actions.ESDeleteIndex(clientES, index); err != nil {
+			if err = ElasticsearchDeleteIndex(clientES, index); err != nil {
 				return
 			}
 		}
@@ -148,25 +138,25 @@ func main() {
 			return
 		}
 
-		if err = actions.COSCheckFile(clientCOS, index, project); err != nil {
+		if err = COSCheckFile(clientCOS, index, project); err != nil {
 			return
 		}
 
-		if err = actions.ESTouchIndex(clientES, index); err != nil {
+		if err = ElasticsearchTouchIndex(clientES, index); err != nil {
 			return
 		}
 
-		if err = actions.ESDisableRefresh(clientES, index); err != nil {
+		if err = ElasticsearchDisableRefresh(clientES, index); err != nil {
 			return
 		}
-		defer actions.ESEnableRefresh(clientES, index)
+		defer ElasticsearchEnableRefresh(clientES, index)
 
-		if err = actions.COSImportToES(clientCOS, index, project, clientES); err != nil {
+		if err = COSImportToES(clientCOS, index, project, clientES); err != nil {
 			return
 		}
 
 	case optSearch != "":
-		if err = actions.COSSearch(clientCOS, optSearch); err != nil {
+		if err = COSSearch(clientCOS, optSearch); err != nil {
 			return
 		}
 	}
