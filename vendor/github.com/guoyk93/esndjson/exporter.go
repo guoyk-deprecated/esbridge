@@ -3,6 +3,8 @@ package esndjson
 import (
 	"context"
 	"errors"
+	"fmt"
+	"github.com/guoyk93/progress"
 	gzip "github.com/klauspost/pgzip"
 	"github.com/olivere/elastic"
 	"io"
@@ -17,7 +19,7 @@ const (
 	ExtNDJSONGzipped = ".ndjson.gz"
 )
 
-type ExporterLogger func(layout string, items ...interface{})
+type Logger func(layout string, items ...interface{})
 
 type ExporterOptions struct {
 	// elasticsearch url
@@ -35,7 +37,7 @@ type ExporterOptions struct {
 	// compress level
 	CompressLevel int
 	// logger
-	Logger ExporterLogger
+	Logger Logger
 }
 
 type Exporter interface {
@@ -49,7 +51,7 @@ const (
 var (
 	newLine = []byte{'\n'}
 
-	dummyExporterLogger ExporterLogger = func(layout string, items ...interface{}) {}
+	discardLogger Logger = func(layout string, items ...interface{}) {}
 )
 
 type exporter struct {
@@ -77,7 +79,10 @@ func (e *exporter) Run(ctx context.Context) (err error) {
 		go e.exportSection(exportCtx, section, tokens, results)
 	}
 
+	p := progress.NewProgress(int64(len(sections)), "export sections", progress.Logger(e.opts.Logger))
+
 	for i := 0; i < len(sections); i++ {
+		p.Incr()
 		err1 := <-results
 		if err1 != nil {
 			exportCancel()
@@ -130,6 +135,8 @@ func (e *exporter) exportRawData(ctx context.Context, section string) (err error
 	scroll := e.c.Scroll(e.opts.Index).Pretty(false).Scroll("5m").Query(
 		elastic.NewTermQuery(e.opts.SectionKey, section),
 	).Size(2000)
+	// progress
+	var p progress.Progress
 	// scroll all documents within section
 	var res *elastic.SearchResult
 	for {
@@ -142,6 +149,10 @@ func (e *exporter) exportRawData(ctx context.Context, section string) (err error
 		if err = ctx.Err(); err != nil {
 			return
 		}
+		if p == nil {
+			p = progress.NewProgress(res.Hits.TotalHits, fmt.Sprintf("export raw %s", section), progress.Logger(e.opts.Logger))
+		}
+		p.Add(int64(len(res.Hits.Hits)))
 		for _, hit := range res.Hits.Hits {
 			if (hit.Source) == nil {
 				continue
@@ -161,11 +172,10 @@ func (e *exporter) exportRawData(ctx context.Context, section string) (err error
 func (e *exporter) logMemoryUsageAndGC(label string) {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	e.opts.Logger("%s: Alloc = %v MiB, Sys = %v MiB, NumGC = %v",
+	e.opts.Logger("%s mem: %v mb / %v mb",
 		label,
 		m.Alloc/1024/1024,
 		m.Sys/1024/1024,
-		m.NumGC,
 	)
 	runtime.GC()
 }
@@ -234,7 +244,7 @@ func NewExporter(opts ExporterOptions) (Exporter, error) {
 		opts.Concurrency = 3
 	}
 	if opts.Logger == nil {
-		opts.Logger = dummyExporterLogger
+		opts.Logger = discardLogger
 	}
 	var err error
 	var client *elastic.Client
