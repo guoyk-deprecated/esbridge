@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -51,6 +52,8 @@ func WorkspaceUploadToCOS(dir string, clientCOS *cos.Client, index string) (err 
 			return
 		}
 		if _, _, err = clientCOS.Object.Upload(context.Background(), index+"/"+fi.Name(), filepath.Join(dir, fi.Name()), &cos.MultiUploadOptions{
+			PartSize:       1000,
+			ThreadPoolSize: runtime.NumCPU(),
 			OptIni: &cos.InitiateMultipartUploadOptions{
 				ObjectPutHeaderOptions: &cos.ObjectPutHeaderOptions{XCosStorageClass: "STANDARD_IA"},
 			},
