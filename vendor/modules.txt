@@ -3,6 +3,9 @@ github.com/google/go-querystring/query
 # github.com/guoyk93/esndjson v1.0.1
 ## explicit
 github.com/guoyk93/esndjson
+# github.com/guoyk93/iocount v1.0.0
+## explicit
+github.com/guoyk93/iocount
 # github.com/klauspost/compress v1.10.8
 ## explicit
 github.com/klauspost/compress/flate
