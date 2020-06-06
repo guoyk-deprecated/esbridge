@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"strings"
 )
 
@@ -177,7 +178,7 @@ func (e *exporter) logMemoryUsageAndGC(label string) {
 		m.Alloc/1024/1024,
 		m.Sys/1024/1024,
 	)
-	runtime.GC()
+	debug.FreeOSMemory()
 }
 
 func (e *exporter) exportSection(ctx context.Context, section string, tokens chan bool, results chan error) {
