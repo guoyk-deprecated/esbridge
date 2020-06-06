@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/guoyk93/esbridge/pkg/progress"
 	"github.com/guoyk93/esndjson"
+	"github.com/guoyk93/progress"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"io/ioutil"
 	"log"
@@ -43,7 +43,7 @@ func WorkspaceUploadToCOS(dir string, clientCOS *cos.Client, index string) (err 
 
 	uploaded := 0
 
-	p := progress.NewProgress(int64(len(fis)), fmt.Sprintf("导出索引到腾讯云存储: %s", index))
+	p := progress.NewProgress(int64(len(fis)), fmt.Sprintf("导出索引到腾讯云存储: %s", index), log.Printf)
 	for _, fi := range fis {
 		p.Incr()
 		if !strings.HasSuffix(fi.Name(), esndjson.ExtNDJSONGzipped) {

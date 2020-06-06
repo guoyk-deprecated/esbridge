@@ -13,6 +13,8 @@ github.com/guoyk93/esndjson v1.0.1 h1:LXdDPwbMXRdYjwuTSFb/l0dctSZPUdGsSUpg4MCLQH
 github.com/guoyk93/esndjson v1.0.1/go.mod h1:brPkcG3XWV+31t5fhlCVWHkSYte5sWUJUaUMDew0jGw=
 github.com/guoyk93/iocount v1.0.0 h1:W/wcX2SWvxW7LwfyMTaori1Lfu0Z5KwdpYgpRRE6lL8=
 github.com/guoyk93/iocount v1.0.0/go.mod h1:liRY2VKoMqynnZEiKVtC4FTl0VX9QQibmm+nHBHZR7s=
+github.com/guoyk93/progress v1.0.0 h1:7nrUR4CfmsWnGEf4GlVmoRtSHG8DdizWkV/w744NJs8=
+github.com/guoyk93/progress v1.0.0/go.mod h1:7Pa8ZIouE7EhWlR4h9C8JZcXvjF34QbGMjvCDR3rb28=
 github.com/klauspost/compress v1.10.8 h1:eLeJ3dr/Y9+XRfJT4l+8ZjmtB5RPJhucH2HeCV5+IZY=
 github.com/klauspost/compress v1.10.8/go.mod h1:aoV0uJVorq1K+umq18yTdKaF57EivdYsUV+/s2qKfXs=
 github.com/klauspost/pgzip v1.2.4 h1:TQ7CNpYKovDOmqzRHKxJh0BeaBI7UdQZYc6p7pMQh1A=

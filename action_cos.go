@@ -6,9 +6,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/guoyk93/esbridge/pkg/progress"
 	"github.com/guoyk93/esndjson"
 	"github.com/guoyk93/iocount"
+	"github.com/guoyk93/progress"
 	"github.com/klauspost/compress/gzip"
 	"github.com/olivere/elastic"
 	"github.com/tencentyun/cos-go-sdk-v5"
@@ -65,7 +65,7 @@ func COSImportToES(clientCOS *cos.Client, index, project string, clientES *elast
 	}
 	defer res.Body.Close()
 
-	p := progress.NewProgress(res.ContentLength, fmt.Sprintf("从腾讯云存储恢复索引: %s (%s)", index, project))
+	p := progress.NewProgress(res.ContentLength, fmt.Sprintf("从腾讯云存储恢复索引: %s (%s)", index, project), log.Printf)
 
 	cr := iocount.NewReader(res.Body)
 	var zr *gzip.Reader

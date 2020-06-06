@@ -6,6 +6,9 @@ github.com/guoyk93/esndjson
 # github.com/guoyk93/iocount v1.0.0
 ## explicit
 github.com/guoyk93/iocount
+# github.com/guoyk93/progress v1.0.0
+## explicit
+github.com/guoyk93/progress
 # github.com/klauspost/compress v1.10.8
 ## explicit
 github.com/klauspost/compress/flate
