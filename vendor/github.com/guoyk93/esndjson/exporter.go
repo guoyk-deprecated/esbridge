@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/guoyk93/iocount"
 	"github.com/guoyk93/progress"
 	gzip "github.com/klauspost/pgzip"
 	"github.com/olivere/elastic"
@@ -13,6 +14,7 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strings"
+	"time"
 )
 
 const (
@@ -103,27 +105,66 @@ func (e *exporter) deleteRawData(ctx context.Context, section string) (err error
 }
 
 func (e *exporter) compressRawData(ctx context.Context, section string) (err error) {
-	var file *os.File
-	if file, err = os.Open(filepath.Join(e.opts.Dir, section+ExtNDJSON)); err != nil {
+	fname,
+	fnameZ := filepath.Join(e.opts.Dir, section+ExtNDJSON),
+		filepath.Join(e.opts.Dir, section+ExtNDJSONGzipped)
+
+	var fi os.FileInfo
+	if fi, err = os.Stat(fname); err != nil {
 		return
 	}
-	defer file.Close()
 
-	var zfile *os.File
-	if zfile, err = os.OpenFile(filepath.Join(e.opts.Dir, section+ExtNDJSONGzipped), os.O_RDWR|os.O_CREATE, 0640); err != nil {
+	e.opts.Logger("raw size: %s %dmb", section, fi.Size()/1024/1024)
+
+	// reader - raw file
+	var r *os.File
+	if r, err = os.Open(fname); err != nil {
 		return
 	}
-	defer zfile.Close()
+	defer r.Close()
 
+	// reader - raw file with iocount
+	cr := iocount.NewReader(r)
+
+	// writer - dest file
+	var w *os.File
+	if w, err = os.OpenFile(fnameZ, os.O_RDWR|os.O_CREATE, 0640); err != nil {
+		return
+	}
+	defer w.Close()
+
+	// writer - gzip writer
 	var zw *gzip.Writer
-	if zw, err = gzip.NewWriterLevel(zfile, e.opts.CompressLevel); err != nil {
+	if zw, err = gzip.NewWriterLevel(w, e.opts.CompressLevel); err != nil {
 		return
 	}
 	defer zw.Close()
 
-	if _, err = io.Copy(zw, file); err != nil {
+	p := progress.NewProgress(fi.Size(), fmt.Sprintf("compressing %s", section), progress.Logger(e.opts.Logger))
+	ctxP, cancelP := context.WithCancel(context.Background())
+	defer cancelP()
+
+	go func() {
+		t := time.NewTicker(time.Second * 3)
+		for {
+			select {
+			case <-t.C:
+				p.Set(cr.ReadCount())
+			case <-ctxP.Done():
+				break
+			}
+		}
+	}()
+
+	if _, err = io.Copy(zw, cr); err != nil {
 		return
 	}
+
+	if fi, err = os.Stat(fnameZ); err != nil {
+		return
+	}
+
+	e.opts.Logger("compressed size: %s %dmb", section, fi.Size()/1024/1024)
 	return
 }
 
