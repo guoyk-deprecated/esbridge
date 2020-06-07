@@ -151,7 +151,7 @@ func (e *exporter) compressRawData(ctx context.Context, section string) (err err
 			case <-t.C:
 				p.Set(cr.ReadCount())
 			case <-ctxP.Done():
-				break
+				return
 			}
 		}
 	}()
