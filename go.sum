@@ -9,10 +9,12 @@ github.com/google/go-querystring v1.0.0 h1:Xkwi/a1rcvNg1PPYe5vI8GbeBY/jrVuDX5ASu
 github.com/google/go-querystring v1.0.0/go.mod h1:odCYkC5MyYFN7vkCjXpyrEuKhc/BUO6wN/zVPAxq5ck=
 github.com/google/uuid v1.1.1 h1:Gkbcsh/GbpXz7lPftLA3P6TYMwjCLYm83jiFQZF/3gY=
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/guoyk93/conc v1.0.0 h1:gyi3IAXnl5Uk0dt47oVEhYOBEK81a6j9Niuwxe17inI=
+github.com/guoyk93/conc v1.0.0/go.mod h1:z0T9YRNs53m5zqIJ3AXNHujODzLqwxfbedT7xZ6yM0c=
 github.com/guoyk93/iocount v1.0.0 h1:W/wcX2SWvxW7LwfyMTaori1Lfu0Z5KwdpYgpRRE6lL8=
 github.com/guoyk93/iocount v1.0.0/go.mod h1:liRY2VKoMqynnZEiKVtC4FTl0VX9QQibmm+nHBHZR7s=
-github.com/guoyk93/progress v1.0.0 h1:7nrUR4CfmsWnGEf4GlVmoRtSHG8DdizWkV/w744NJs8=
-github.com/guoyk93/progress v1.0.0/go.mod h1:7Pa8ZIouE7EhWlR4h9C8JZcXvjF34QbGMjvCDR3rb28=
+github.com/guoyk93/logutil v1.0.0 h1:yoVVh4EuAoN1viBrP7ZnVijvatwrRfIDrm2SGprlHJ0=
+github.com/guoyk93/logutil v1.0.0/go.mod h1:HszSIxq8EecplH+383axY9UznRsyL+ojVCtmqIsgemU=
 github.com/klauspost/compress v1.10.8 h1:eLeJ3dr/Y9+XRfJT4l+8ZjmtB5RPJhucH2HeCV5+IZY=
 github.com/klauspost/compress v1.10.8/go.mod h1:aoV0uJVorq1K+umq18yTdKaF57EivdYsUV+/s2qKfXs=
 github.com/klauspost/pgzip v1.2.4 h1:TQ7CNpYKovDOmqzRHKxJh0BeaBI7UdQZYc6p7pMQh1A=

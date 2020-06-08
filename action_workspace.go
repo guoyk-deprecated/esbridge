@@ -4,8 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/guoyk93/esbridge/esndjson"
-	"github.com/guoyk93/progress"
+	"github.com/guoyk93/logutil"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"io/ioutil"
 	"log"
@@ -35,7 +34,8 @@ func WorkspaceSetup(dir string) (err error) {
 }
 
 func WorkspaceUploadToCOS(dir string, clientCOS *cos.Client, index string) (err error) {
-	log.Printf("导出索引到腾讯云存储: %s", index)
+	title := fmt.Sprintf("导出索引到腾讯云存储: %s", index)
+	log.Println(title)
 
 	var fis []os.FileInfo
 	if fis, err = ioutil.ReadDir(dir); err != nil {
@@ -44,10 +44,12 @@ func WorkspaceUploadToCOS(dir string, clientCOS *cos.Client, index string) (err 
 
 	uploaded := 0
 
-	p := progress.NewProgress(int64(len(fis)), fmt.Sprintf("导出索引到腾讯云存储: %s", index), log.Printf)
+	prg := logutil.NewProgress(logutil.LoggerFunc(log.Printf), title)
+	prg.SetTotal(int64(len(fis)))
+
 	for _, fi := range fis {
-		p.Incr()
-		if !strings.HasSuffix(fi.Name(), esndjson.ExtNDJSONGzipped) {
+		prg.Incr()
+		if !strings.HasSuffix(fi.Name(), ExtCompressedNDJSON) {
 			err = fmt.Errorf("发现未知文件: %s", fi.Name())
 			return
 		}

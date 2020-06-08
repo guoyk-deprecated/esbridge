@@ -111,7 +111,7 @@ func main() {
 			return
 		}
 
-		if err = ElasticsearchExportToWorkspace(conf.Elasticsearch.URL, workspace, index, optBulk); err != nil {
+		if err = ElasticsearchExportToWorkspace(clientES, workspace, index, optBulk); err != nil {
 			return
 		}
 

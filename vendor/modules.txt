@@ -4,12 +4,15 @@
 ## explicit
 # github.com/google/go-querystring v1.0.0
 github.com/google/go-querystring/query
+# github.com/guoyk93/conc v1.0.0
+## explicit
+github.com/guoyk93/conc
 # github.com/guoyk93/iocount v1.0.0
 ## explicit
 github.com/guoyk93/iocount
-# github.com/guoyk93/progress v1.0.0
+# github.com/guoyk93/logutil v1.0.0
 ## explicit
-github.com/guoyk93/progress
+github.com/guoyk93/logutil
 # github.com/klauspost/compress v1.10.8
 ## explicit
 github.com/klauspost/compress/flate

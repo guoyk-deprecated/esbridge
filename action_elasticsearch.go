@@ -3,7 +3,6 @@ package main
 import (
 	"compress/gzip"
 	"context"
-	"github.com/guoyk93/esbridge/esndjson"
 	"github.com/olivere/elastic"
 	"log"
 )
@@ -50,22 +49,16 @@ func ElasticsearchDeleteIndex(clientES *elastic.Client, index string) (err error
 	return
 }
 
-func ElasticsearchExportToWorkspace(url, dir, index string, bulk int) (err error) {
+func ElasticsearchExportToWorkspace(clientES *elastic.Client, dir, index string, bulk int) (err error) {
 	log.Printf("导出索引到本地文件: %s", index)
-	var e esndjson.Exporter
-	if e, err = esndjson.NewExporter(esndjson.ExporterOptions{
-		URL:           url,
-		Sniff:         false,
+	e := NewExporter(ExporterOptions{
+		ESClient:      clientES,
 		Dir:           dir,
 		Index:         index,
 		Bulk:          bulk,
-		SectionKey:    "project",
 		Concurrency:   3,
 		CompressLevel: gzip.BestCompression,
-		Logger:        log.Printf,
-	}); err != nil {
-		return
-	}
+	})
 	err = e.Run(context.Background())
 	return
 }
