@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/guoyk93/esndjson"
+	"github.com/guoyk93/esbridge/esndjson"
 	"github.com/guoyk93/progress"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"io/ioutil"

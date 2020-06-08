@@ -3,7 +3,7 @@ package main
 import (
 	"compress/gzip"
 	"context"
-	"github.com/guoyk93/esndjson"
+	"github.com/guoyk93/esbridge/esndjson"
 	"github.com/olivere/elastic"
 	"log"
 )

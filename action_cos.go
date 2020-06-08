@@ -6,7 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/guoyk93/esndjson"
+	"github.com/guoyk93/esbridge/esndjson"
 	"github.com/guoyk93/iocount"
 	"github.com/guoyk93/progress"
 	"github.com/klauspost/compress/gzip"
