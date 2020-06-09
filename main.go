@@ -1,15 +1,17 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
+	"github.com/guoyk93/esbridge/tasks"
+	gzip "github.com/klauspost/pgzip"
 	"github.com/olivere/elastic"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 	"strings"
 
 	_ "net/http/pprof"
@@ -100,30 +102,18 @@ func main() {
 			return
 		}
 
-		workspace := filepath.Join(conf.Workspace, index)
-
-		if err = WorkspaceSetup(workspace); err != nil {
-			return
-		}
-		defer WorkspaceClear(workspace)
-
-		if err = ElasticsearchOpenIndex(clientES, index); err != nil {
-			return
-		}
-
-		if err = ElasticsearchExportToWorkspace(clientES, workspace, index, optBulk); err != nil {
+		if err = tasks.IndexMigratie(tasks.IndexMigrateOptions{
+			ESClient:         clientES,
+			COSClient:        clientCOS,
+			Dir:              conf.Workspace,
+			Index:            index,
+			Bulk:             5000,
+			Concurrency:      5,
+			CompressionLevel: gzip.BestCompression,
+		}).Do(context.Background()); err != nil {
 			return
 		}
 
-		if err = WorkspaceUploadToCOS(workspace, clientCOS, index); err != nil {
-			return
-		}
-
-		if !optNoDelete {
-			if err = ElasticsearchDeleteIndex(clientES, index); err != nil {
-				return
-			}
-		}
 	case optRestore != "":
 		ss := strings.Split(optRestore, "/")
 		if len(ss) != 2 {

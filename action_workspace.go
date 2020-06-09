@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/guoyk93/esbridge/tasks"
 	"github.com/guoyk93/logutil"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"io/ioutil"
@@ -49,7 +50,7 @@ func WorkspaceUploadToCOS(dir string, clientCOS *cos.Client, index string) (err 
 
 	for _, fi := range fis {
 		prg.Incr()
-		if !strings.HasSuffix(fi.Name(), ExtCompressedNDJSON) {
+		if !strings.HasSuffix(fi.Name(), tasks.ExtCompressedNDJSON) {
 			err = fmt.Errorf("发现未知文件: %s", fi.Name())
 			return
 		}

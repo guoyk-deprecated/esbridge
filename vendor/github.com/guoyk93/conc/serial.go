@@ -7,7 +7,7 @@ func Serial(tasks ...Task) Task {
 	return TaskFunc(func(ctx context.Context) error {
 		errs := make(Errs, len(tasks), len(tasks))
 		for i, task := range tasks {
-			if err := task.Run(ctx); err != nil {
+			if err := task.Do(ctx); err != nil {
 				errs[i] = err
 				break
 			}
@@ -21,7 +21,7 @@ func SerialFailSafe(tasks ...Task) Task {
 	return TaskFunc(func(ctx context.Context) error {
 		errs := make(Errs, len(tasks), len(tasks))
 		for i, task := range tasks {
-			errs[i] = task.Run(ctx)
+			errs[i] = task.Do(ctx)
 		}
 		return errs.Sanitize()
 	})

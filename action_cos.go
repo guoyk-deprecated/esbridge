@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/guoyk93/esbridge/tasks"
 	"github.com/guoyk93/iocount"
 	"github.com/guoyk93/logutil"
 	"github.com/klauspost/compress/gzip"
@@ -27,11 +28,11 @@ func COSSearch(clientCOS *cos.Client, keyword string) (err error) {
 			return
 		}
 		for _, o := range res.Contents {
-			if !strings.HasSuffix(o.Key, ExtCompressedNDJSON) {
+			if !strings.HasSuffix(o.Key, tasks.ExtCompressedNDJSON) {
 				log.Printf("发现未知文件: %s", o.Key)
 				continue
 			}
-			p := strings.TrimPrefix(strings.TrimSuffix(o.Key, ExtCompressedNDJSON), "/")
+			p := strings.TrimPrefix(strings.TrimSuffix(o.Key, tasks.ExtCompressedNDJSON), "/")
 			if !strings.Contains(p, keyword) {
 				continue
 			}
@@ -52,7 +53,7 @@ func COSSearch(clientCOS *cos.Client, keyword string) (err error) {
 
 func COSCheckFile(clientCOS *cos.Client, index, project string) (err error) {
 	log.Printf("检查腾讯云存储文件: INDEX = %s, PROJECT = %s", index, project)
-	_, err = clientCOS.Object.Head(context.Background(), index+"/"+project+ExtCompressedNDJSON, nil)
+	_, err = clientCOS.Object.Head(context.Background(), index+"/"+project+tasks.ExtCompressedNDJSON, nil)
 	return
 }
 
@@ -60,7 +61,7 @@ func COSImportToES(clientCOS *cos.Client, index, project string, clientES *elast
 	title := fmt.Sprintf("从腾讯云存储恢复索引: %s (%s)", index, project)
 	log.Printf(title)
 	var res *cos.Response
-	if res, err = clientCOS.Object.Get(context.Background(), index+"/"+project+ExtCompressedNDJSON, nil); err != nil {
+	if res, err = clientCOS.Object.Get(context.Background(), index+"/"+project+tasks.ExtCompressedNDJSON, nil); err != nil {
 		return
 	}
 	defer res.Body.Close()

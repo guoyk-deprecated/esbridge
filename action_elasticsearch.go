@@ -1,17 +1,10 @@
 package main
 
 import (
-	"compress/gzip"
 	"context"
 	"github.com/olivere/elastic"
 	"log"
 )
-
-func ElasticsearchOpenIndex(clientES *elastic.Client, index string) (err error) {
-	log.Printf("打开索引并等待索引恢复: %s", index)
-	_, err = clientES.OpenIndex(index).WaitForActiveShards("all").Do(context.Background())
-	return
-}
 
 func ElasticsearchTouchIndex(clientES *elastic.Client, index string) (err error) {
 	log.Printf("确保索引存在: %s", index)
@@ -40,25 +33,5 @@ func ElasticsearchEnableRefresh(clientES *elastic.Client, index string) (err err
 	_, err = clientES.IndexPutSettings(index).FlatSettings(true).BodyJson(map[string]interface{}{
 		"index.refresh_interval": "10s",
 	}).Do(context.Background())
-	return
-}
-
-func ElasticsearchDeleteIndex(clientES *elastic.Client, index string) (err error) {
-	log.Printf("删除索引: %s", index)
-	_, err = clientES.DeleteIndex(index).Do(context.Background())
-	return
-}
-
-func ElasticsearchExportToWorkspace(clientES *elastic.Client, dir, index string, bulk int) (err error) {
-	log.Printf("导出索引到本地文件: %s", index)
-	e := NewExporter(ExporterOptions{
-		ESClient:      clientES,
-		Dir:           dir,
-		Index:         index,
-		Bulk:          bulk,
-		Concurrency:   3,
-		CompressLevel: gzip.BestCompression,
-	})
-	err = e.Run(context.Background())
 	return
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/olivere/elastic"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -27,17 +28,8 @@ var (
 )
 
 type ProjectMigrateOptions struct {
-	ESClient         *elastic.Client
-	COSClient        *cos.Client
-	Dir              string
-	Index            string
-	Project          string
-	Bulk             int
-	CompressionLevel int
-}
-
-func (opts ProjectMigrateOptions) Workspace() string {
-	return filepath.Join(opts.Dir, opts.Index)
+	IndexMigrateOptions
+	Project string
 }
 
 func (opts ProjectMigrateOptions) FilenameRaw() string {
@@ -49,13 +41,19 @@ func (opts ProjectMigrateOptions) FilenameCompressed() string {
 }
 
 func ProjectMigrate(opts ProjectMigrateOptions) conc.Task {
-	return conc.Serial(
-		ProjectExportRawData(opts),
-		ProjectCompressData(opts),
-		ProjectDeleteRawData(opts),
-		ProjectUploadCompressedData(opts),
-		ProjectDeleteCompressedData(opts),
-	)
+	return conc.TaskFunc(func(ctx context.Context) error {
+		res, err := opts.COSClient.Object.Head(ctx, opts.Index+"/"+opts.Project, nil)
+		if err == nil {
+			buf, _ := ioutil.ReadAll(res.Body)
+			log.Printf("索引/项目已经存在: %s", buf)
+			return nil
+		}
+		return conc.Serial(
+			ProjectExportRawData(opts),
+			ProjectCompressData(opts),
+			ProjectUploadCompressedData(opts),
+		).Do(ctx)
+	})
 }
 
 func ProjectExportRawData(opts ProjectMigrateOptions) conc.Task {
@@ -104,6 +102,7 @@ func ProjectExportRawData(opts ProjectMigrateOptions) conc.Task {
 				}
 			}
 		}
+		PrintMemUsageAndGC(title)
 		return
 	})
 }
@@ -167,21 +166,20 @@ func ProjectCompressData(opts ProjectMigrateOptions) conc.Task {
 
 		log.Printf("压缩后数据大小: %s/%s, %dmb", opts.Index, opts.Project, cpsInfo.Size()/1024/1024)
 
-		return
-	})
-}
+		PrintMemUsageAndGC(title)
 
-func ProjectDeleteRawData(opts ProjectMigrateOptions) conc.Task {
-	return conc.TaskFunc(func(ctx context.Context) error {
 		log.Printf("删除原始文件: %s/%s", opts.Index, opts.Project)
-		return os.Remove(opts.FilenameRaw())
+		if err = os.Remove(opts.FilenameRaw()); err != nil {
+			return
+		}
+		return
 	})
 }
 
 func ProjectUploadCompressedData(opts ProjectMigrateOptions) conc.Task {
 	return conc.TaskFunc(func(ctx context.Context) (err error) {
 		log.Printf("上传压缩后文件: %s/%s", opts.Index, opts.Project)
-		_, _, err = opts.COSClient.Object.Upload(ctx,
+		if _, _, err = opts.COSClient.Object.Upload(ctx,
 			opts.Index+"/"+opts.Project+ExtCompressedNDJSON,
 			opts.FilenameCompressed(),
 			&cos.MultiUploadOptions{
@@ -191,14 +189,13 @@ func ProjectUploadCompressedData(opts ProjectMigrateOptions) conc.Task {
 					ObjectPutHeaderOptions: &cos.ObjectPutHeaderOptions{XCosStorageClass: "STANDARD_IA"},
 				},
 			},
-		)
-		return
-	})
-}
-
-func ProjectDeleteCompressedData(opts ProjectMigrateOptions) conc.Task {
-	return conc.TaskFunc(func(ctx context.Context) error {
+		); err != nil {
+			return
+		}
 		log.Printf("删除压缩后文件: %s/%s", opts.Index, opts.Project)
-		return os.Remove(opts.FilenameCompressed())
+		if err = os.Remove(opts.FilenameCompressed()); err != nil {
+			return
+		}
+		return
 	})
 }
