@@ -48,8 +48,8 @@ func IndexMigrate(opts IndexMigrateOptions) conc.Task {
 			return
 		}
 		log.Printf("索引包含以下项目: %s", strings.Join(projects, ", "))
+		done, total := int64(0), int64(len(projects))
 		tasks := make([]conc.Task, 0, len(projects))
-		done, total := int64(0), int64(len(tasks))
 		for _, _project := range projects {
 			project := _project
 			tasks = append(tasks, conc.TaskFunc(func(ctx context.Context) error {
@@ -57,7 +57,7 @@ func IndexMigrate(opts IndexMigrateOptions) conc.Task {
 					IndexMigrateOptions: opts,
 					Project:             project,
 				}
-				atomic.AddInt64(&done, -1)
+				atomic.AddInt64(&done, 0)
 				log.Printf("项目进度: %d/%d", done, total)
 				return ProjectMigrate(pOpts).Do(ctx)
 			}))
