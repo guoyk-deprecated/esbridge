@@ -1,12 +1,13 @@
-# github.com/fortytw2/leaktest v1.3.0
-## explicit
-# github.com/google/go-cmp v0.4.1
-## explicit
+# github.com/buger/jsonparser v1.0.0
+github.com/buger/jsonparser
 # github.com/google/go-querystring v1.0.0
 github.com/google/go-querystring/query
 # github.com/guoyk93/conc v1.1.0
 ## explicit
 github.com/guoyk93/conc
+# github.com/guoyk93/esexporter v1.1.0
+## explicit
+github.com/guoyk93/esexporter
 # github.com/guoyk93/iocount v1.0.0
 ## explicit
 github.com/guoyk93/iocount
@@ -21,20 +22,18 @@ github.com/klauspost/compress/gzip
 ## explicit
 github.com/klauspost/pgzip
 # github.com/mailru/easyjson v0.7.1
-## explicit
 github.com/mailru/easyjson
 github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
 # github.com/mozillazg/go-httpheader v0.2.1
 github.com/mozillazg/go-httpheader
-# github.com/olivere/elastic v6.2.32+incompatible
+# github.com/olivere/elastic v6.2.33+incompatible
 ## explicit
 github.com/olivere/elastic
 github.com/olivere/elastic/config
 github.com/olivere/elastic/uritemplates
 # github.com/pkg/errors v0.9.1
-## explicit
 github.com/pkg/errors
 # github.com/tencentyun/cos-go-sdk-v5 v0.7.6
 ## explicit

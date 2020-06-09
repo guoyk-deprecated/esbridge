@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/guoyk93/conc"
+	"github.com/guoyk93/esexporter"
 	"github.com/guoyk93/iocount"
 	"github.com/guoyk93/logutil"
 	gzip "github.com/klauspost/pgzip"
@@ -71,11 +72,32 @@ func ProjectExportRawData(opts ProjectMigrateOptions) conc.Task {
 		}
 		defer f.Close()
 
+		prg := logutil.NewProgress(logutil.LoggerFunc(log.Printf), title)
+
+		if err = esexporter.New(esexporter.Options{
+			Client: opts.ESClient,
+			Index:  opts.Index,
+			Query:  elastic.NewTermQuery("project", opts.Project),
+			Type:   "_doc",
+			Scroll: "3m",
+			Size:   int64(opts.Bulk),
+		}, func(buf []byte, id int64, total int64) (err error) {
+			prg.SetTotal(total)
+			prg.SetCount(id + 1)
+			if _, err = f.Write(buf); err != nil {
+				return
+			}
+			if _, err = f.Write(newLine); err != nil {
+				return
+			}
+			return
+		}).Do(ctx); err != nil {
+			return
+		}
+
 		scroll := opts.ESClient.Scroll(opts.Index).Pretty(false).Scroll("5m").Query(
 			elastic.NewTermQuery("project", opts.Project),
 		).Size(opts.Bulk)
-
-		prg := logutil.NewProgress(logutil.LoggerFunc(log.Printf), title)
 
 		var res *elastic.SearchResult
 		for {
