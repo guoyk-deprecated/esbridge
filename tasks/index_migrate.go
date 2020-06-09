@@ -57,7 +57,7 @@ func IndexMigrate(opts IndexMigrateOptions) conc.Task {
 					IndexMigrateOptions: opts,
 					Project:             project,
 				}
-				atomic.AddInt64(&done, 0)
+				atomic.AddInt64(&done, 1)
 				log.Printf("项目进度: %d/%d", done, total)
 				return ProjectMigrate(pOpts).Do(ctx)
 			}))
