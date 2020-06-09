@@ -95,35 +95,6 @@ func ProjectExportRawData(opts ProjectMigrateOptions) conc.Task {
 			return
 		}
 
-		scroll := opts.ESClient.Scroll(opts.Index).Pretty(false).Scroll("5m").Query(
-			elastic.NewTermQuery("project", opts.Project),
-		).Size(opts.Bulk)
-
-		var res *elastic.SearchResult
-		for {
-			if res, err = scroll.Do(ctx); err != nil {
-				if err == io.EOF {
-					err = nil
-				}
-				break
-			}
-
-			prg.SetTotal(res.Hits.TotalHits)
-			prg.Add(int64(len(res.Hits.Hits)))
-
-			for _, hit := range res.Hits.Hits {
-				if hit.Source == nil {
-					continue
-				}
-				buf := *hit.Source
-				if _, err = f.Write(buf); err != nil {
-					return
-				}
-				if _, err = f.Write(newLine); err != nil {
-					return
-				}
-			}
-		}
 		PrintMemUsageAndGC(title)
 		return
 	})
