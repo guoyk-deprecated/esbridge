@@ -20,12 +20,13 @@ import (
 var (
 	conf Conf
 
-	optConf     string
-	optMigrate  string
-	optRestore  string
-	optSearch   string
-	optNoDelete bool
-	optBulk     int
+	optConf        string
+	optMigrate     string
+	optRestore     string
+	optSearch      string
+	optNoDelete    bool
+	optBulk        int
+	optConcurrency int
 
 	optBestCompression bool
 	optBestSpeed       bool
@@ -36,7 +37,8 @@ func load() (err error) {
 	flag.StringVar(&optMigrate, "migrate", "", "要迁移的离线索引, ")
 	flag.StringVar(&optRestore, "restore", "", "要恢复的离线索引, 格式为 INDEX/PROJECT")
 	flag.StringVar(&optSearch, "search", "", "要搜索的关键字")
-	flag.IntVar(&optBulk, "bulk", 2000, "导出时的批量数")
+	flag.IntVar(&optBulk, "bulk", 5000, "导出时的批量数")
+	flag.IntVar(&optConcurrency, "concurrency", 3, "导出时的并发数")
 	flag.BoolVar(&optNoDelete, "no-delete", false, "迁移时不删除索引，仅用于测试")
 	flag.BoolVar(&optBestCompression, "best-compression", false, "最佳压缩率")
 	flag.BoolVar(&optBestSpeed, "best-speed", false, "最佳压缩速度")
@@ -107,8 +109,8 @@ func main() {
 			COSClient:        clientCOS,
 			Dir:              conf.Workspace,
 			Index:            index,
-			Bulk:             5000,
-			Concurrency:      5,
+			Bulk:             optBulk,
+			Concurrency:      optConcurrency,
 			CompressionLevel: gzip.BestCompression,
 		}).Do(context.Background()); err != nil {
 			return
