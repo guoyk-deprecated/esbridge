@@ -11,8 +11,8 @@ import (
 	"github.com/olivere/elastic"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"io"
-	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -44,9 +44,8 @@ func (opts ProjectMigrateOptions) FilenameCompressed() string {
 func ProjectMigrate(opts ProjectMigrateOptions) conc.Task {
 	return conc.TaskFunc(func(ctx context.Context) error {
 		res, err := opts.COSClient.Object.Head(ctx, opts.Index+"/"+opts.Project+ExtCompressedNDJSON, nil)
-		if err == nil {
-			buf, _ := ioutil.ReadAll(res.Body)
-			log.Printf("索引/项目已经存在: %s", buf)
+		if err == nil && res.StatusCode == http.StatusOK {
+			log.Printf("索引/项目已经存在: %s/%s", opts.Index, opts.Project)
 			return nil
 		}
 		return conc.Serial(
