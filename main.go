@@ -86,7 +86,10 @@ func main() {
 
 	// setup es
 	var clientES *elastic.Client
-	if clientES, err = elastic.NewClient(elastic.SetURL(conf.Elasticsearch.URL)); err != nil {
+	if clientES, err = elastic.NewClient(
+		elastic.SetURL(conf.Elasticsearch.URL),
+		elastic.SetGzip(false),
+	); err != nil {
 		return
 	}
 
