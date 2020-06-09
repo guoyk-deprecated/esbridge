@@ -104,9 +104,10 @@ func main() {
 			return
 		}
 
-		if err = tasks.IndexMigratie(tasks.IndexMigrateOptions{
+		if err = tasks.IndexMigrate(tasks.IndexMigrateOptions{
 			ESClient:         clientES,
 			COSClient:        clientCOS,
+			NoDelete:         optNoDelete,
 			Dir:              conf.Workspace,
 			Index:            index,
 			Bulk:             optBulk,
