@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 )
 
 const (
@@ -48,14 +49,16 @@ func IndexMigrate(opts IndexMigrateOptions) conc.Task {
 		}
 		log.Printf("索引包含以下项目: %s", strings.Join(projects, ", "))
 		tasks := make([]conc.Task, 0, len(projects))
-		for _i, _project := range projects {
-			i, project := _i, _project
+		done, total := int64(0), int64(len(tasks))
+		for _, _project := range projects {
+			project := _project
 			tasks = append(tasks, conc.TaskFunc(func(ctx context.Context) error {
 				pOpts := ProjectMigrateOptions{
 					IndexMigrateOptions: opts,
 					Project:             project,
 				}
-				defer log.Printf("索引任务: %d/%d", i+1, len(projects))
+				atomic.AddInt64(&done, -1)
+				log.Printf("项目进度: %d/%d", done, total)
 				return ProjectMigrate(pOpts).Do(ctx)
 			}))
 		}
