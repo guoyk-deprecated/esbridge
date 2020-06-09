@@ -43,7 +43,7 @@ func (opts ProjectMigrateOptions) FilenameCompressed() string {
 
 func ProjectMigrate(opts ProjectMigrateOptions) conc.Task {
 	return conc.TaskFunc(func(ctx context.Context) error {
-		res, err := opts.COSClient.Object.Head(ctx, opts.Index+"/"+opts.Project, nil)
+		res, err := opts.COSClient.Object.Head(ctx, opts.Index+"/"+opts.Project+ExtCompressedNDJSON, nil)
 		if err == nil {
 			buf, _ := ioutil.ReadAll(res.Body)
 			log.Printf("索引/项目已经存在: %s", buf)
