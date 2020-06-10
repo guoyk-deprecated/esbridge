@@ -58,7 +58,7 @@ func ProjectMigrate(opts ProjectMigrateOptions) conc.Task {
 
 func ProjectExportRawData(opts ProjectMigrateOptions) conc.Task {
 	return conc.TaskFunc(func(ctx context.Context) (err error) {
-		title := fmt.Sprintf("导出索引原始数据: %s/%s", opts.Index, opts.Project)
+		title := fmt.Sprintf("导出项目原始数据: %s/%s", opts.Index, opts.Project)
 		log.Println(title)
 
 		if err = os.MkdirAll(opts.Workspace(), 0755); err != nil {
@@ -100,14 +100,14 @@ func ProjectExportRawData(opts ProjectMigrateOptions) conc.Task {
 
 func ProjectCompressData(opts ProjectMigrateOptions) conc.Task {
 	return conc.TaskFunc(func(ctx context.Context) (err error) {
-		title := fmt.Sprintf("压缩原始数据: %s/%s", opts.Index, opts.Project)
+		title := fmt.Sprintf("压缩项目原始数据: %s/%s", opts.Index, opts.Project)
 		log.Println(title)
 
 		var rawInfo os.FileInfo
 		if rawInfo, err = os.Stat(opts.FilenameRaw()); err != nil {
 			return
 		}
-		log.Printf("原始数据大小: %s/%s, %dmb", opts.Index, opts.Project, rawInfo.Size()/1024/1024)
+		log.Printf("原始数据文件大小: %s/%s, %dmb", opts.Index, opts.Project, rawInfo.Size()/1024/1024)
 
 		var rawFile *os.File
 		if rawFile, err = os.Open(opts.FilenameRaw()); err != nil {
@@ -155,7 +155,7 @@ func ProjectCompressData(opts ProjectMigrateOptions) conc.Task {
 			return
 		}
 
-		log.Printf("压缩后数据大小: %s/%s, %dmb", opts.Index, opts.Project, cpsInfo.Size()/1024/1024)
+		log.Printf("压缩后文件大小: %s/%s, %dmb", opts.Index, opts.Project, cpsInfo.Size()/1024/1024)
 
 		PrintMemUsageAndGC(title)
 
