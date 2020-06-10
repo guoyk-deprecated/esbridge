@@ -6,7 +6,7 @@ import (
 	"github.com/guoyk93/conc"
 	"github.com/guoyk93/esexporter"
 	"github.com/guoyk93/logutil"
-	gzip "github.com/klauspost/pgzip"
+	"github.com/klauspost/compress/gzip"
 	"github.com/olivere/elastic"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"log"
