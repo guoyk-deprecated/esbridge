@@ -1,5 +1,7 @@
 # github.com/buger/jsonparser v1.0.0
 github.com/buger/jsonparser
+# github.com/davecgh/go-spew v1.1.1
+github.com/davecgh/go-spew/spew
 # github.com/google/go-querystring v1.0.0
 github.com/google/go-querystring/query
 # github.com/guoyk93/conc v1.1.1
@@ -35,6 +37,11 @@ github.com/olivere/elastic/config
 github.com/olivere/elastic/uritemplates
 # github.com/pkg/errors v0.9.1
 github.com/pkg/errors
+# github.com/pmezard/go-difflib v1.0.0
+github.com/pmezard/go-difflib/difflib
+# github.com/stretchr/testify v1.6.1
+## explicit
+github.com/stretchr/testify/assert
 # github.com/tencentyun/cos-go-sdk-v5 v0.7.6
 ## explicit
 github.com/tencentyun/cos-go-sdk-v5

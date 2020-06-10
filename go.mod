@@ -10,6 +10,7 @@ require (
 	github.com/klauspost/compress v1.10.8
 	github.com/klauspost/pgzip v1.2.4
 	github.com/olivere/elastic v6.2.33+incompatible
+	github.com/stretchr/testify v1.6.1
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.6
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 )

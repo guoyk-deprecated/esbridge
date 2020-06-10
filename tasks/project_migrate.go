@@ -74,23 +74,44 @@ func ProjectExportCompressedData(opts ProjectMigrateOptions) conc.Task {
 
 		prg := logutil.NewProgress(logutil.LoggerFunc(log.Printf), title)
 
-		if err = esexporter.New(opts.ESClient, esexporter.Options{
-			Index:  opts.Index,
-			Query:  elastic.NewTermQuery("project", opts.Project),
-			Type:   "_doc",
-			Scroll: "3m",
-			Size:   int64(opts.Bulk),
-		}, func(buf []byte, id int64, total int64) (err error) {
-			prg.SetTotal(total)
-			prg.SetCount(id + 1)
-			if _, err = zw.Write(buf); err != nil {
-				return
+		chSrc := make(chan []byte, opts.Bulk)
+
+		taskWrite := conc.TaskFunc(func(ctx context.Context) (err error) {
+			for {
+				select {
+				case buf, ok := <-chSrc:
+					if !ok {
+						return
+					}
+					if _, err = zw.Write(buf); err != nil {
+						return
+					}
+					if _, err = zw.Write(newLine); err != nil {
+						return
+					}
+				case <-ctx.Done():
+					return
+				}
 			}
-			if _, err = zw.Write(newLine); err != nil {
+		})
+
+		taskFetch := conc.TaskFunc(func(ctx context.Context) error {
+			defer close(chSrc)
+			return esexporter.New(opts.ESClient, esexporter.Options{
+				Index:  opts.Index,
+				Query:  elastic.NewTermQuery("project", opts.Project),
+				Type:   "_doc",
+				Scroll: "3m",
+				Size:   int64(opts.Bulk),
+			}, func(buf []byte, id int64, total int64) (err error) {
+				prg.SetTotal(total)
+				prg.SetCount(id + 1)
+				chSrc <- buf
 				return
-			}
-			return
-		}).Do(ctx); err != nil {
+			}).Do(ctx)
+		})
+
+		if err = conc.Parallel(taskWrite, taskFetch).Do(ctx); err != nil {
 			return
 		}
 
