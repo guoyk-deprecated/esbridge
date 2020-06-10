@@ -5,22 +5,18 @@ import (
 	"fmt"
 	"github.com/guoyk93/conc"
 	"github.com/guoyk93/esexporter"
-	"github.com/guoyk93/iocount"
 	"github.com/guoyk93/logutil"
 	gzip "github.com/klauspost/pgzip"
 	"github.com/olivere/elastic"
 	"github.com/tencentyun/cos-go-sdk-v5"
-	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
-	"time"
 )
 
 const (
-	ExtNDJSON           = ".ndjson"
 	ExtCompressedNDJSON = ".ndjson.gz"
 )
 
@@ -33,43 +29,48 @@ type ProjectMigrateOptions struct {
 	Project string
 }
 
-func (opts ProjectMigrateOptions) FilenameRaw() string {
-	return filepath.Join(opts.Workspace(), opts.Project+ExtNDJSON)
-}
-
 func (opts ProjectMigrateOptions) FilenameCompressed() string {
 	return filepath.Join(opts.Workspace(), opts.Project+ExtCompressedNDJSON)
 }
 
+func (opts ProjectMigrateOptions) COSKey() string {
+	return opts.Index + "/" + opts.Project + ExtCompressedNDJSON
+}
+
 func ProjectMigrate(opts ProjectMigrateOptions) conc.Task {
 	return conc.TaskFunc(func(ctx context.Context) error {
-		res, err := opts.COSClient.Object.Head(ctx, opts.Index+"/"+opts.Project+ExtCompressedNDJSON, nil)
+		res, err := opts.COSClient.Object.Head(ctx, opts.COSKey(), nil)
 		if err == nil && res.StatusCode == http.StatusOK {
 			log.Printf("索引/项目已经存在: %s/%s", opts.Index, opts.Project)
 			return nil
 		}
 		return conc.Serial(
-			ProjectExportRawData(opts),
-			ProjectCompressData(opts),
+			ProjectExportCompressedData(opts),
 			ProjectUploadCompressedData(opts),
 		).Do(ctx)
 	})
 }
 
-func ProjectExportRawData(opts ProjectMigrateOptions) conc.Task {
+func ProjectExportCompressedData(opts ProjectMigrateOptions) conc.Task {
 	return conc.TaskFunc(func(ctx context.Context) (err error) {
-		title := fmt.Sprintf("导出项目原始数据: %s/%s", opts.Index, opts.Project)
+		title := fmt.Sprintf("导出项目数据到本地: %s/%s", opts.Index, opts.Project)
 		log.Println(title)
 
 		if err = os.MkdirAll(opts.Workspace(), 0755); err != nil {
 			return
 		}
 
-		var f *os.File
-		if f, err = os.OpenFile(opts.FilenameRaw(), os.O_CREATE|os.O_RDWR, 0640); err != nil {
+		var zf *os.File
+		if zf, err = os.OpenFile(opts.FilenameCompressed(), os.O_CREATE|os.O_RDWR, 0640); err != nil {
 			return
 		}
-		defer f.Close()
+		defer zf.Close()
+
+		var zw *gzip.Writer
+		if zw, err = gzip.NewWriterLevel(zf, gzip.BestCompression); err != nil {
+			return
+		}
+		defer zw.Close()
 
 		prg := logutil.NewProgress(logutil.LoggerFunc(log.Printf), title)
 
@@ -82,10 +83,10 @@ func ProjectExportRawData(opts ProjectMigrateOptions) conc.Task {
 		}, func(buf []byte, id int64, total int64) (err error) {
 			prg.SetTotal(total)
 			prg.SetCount(id + 1)
-			if _, err = f.Write(buf); err != nil {
+			if _, err = zw.Write(buf); err != nil {
 				return
 			}
-			if _, err = f.Write(newLine); err != nil {
+			if _, err = zw.Write(newLine); err != nil {
 				return
 			}
 			return
@@ -98,80 +99,11 @@ func ProjectExportRawData(opts ProjectMigrateOptions) conc.Task {
 	})
 }
 
-func ProjectCompressData(opts ProjectMigrateOptions) conc.Task {
-	return conc.TaskFunc(func(ctx context.Context) (err error) {
-		title := fmt.Sprintf("压缩项目原始数据: %s/%s", opts.Index, opts.Project)
-		log.Println(title)
-
-		var rawInfo os.FileInfo
-		if rawInfo, err = os.Stat(opts.FilenameRaw()); err != nil {
-			return
-		}
-		log.Printf("原始数据文件大小: %s/%s, %dmb", opts.Index, opts.Project, rawInfo.Size()/1024/1024)
-
-		var rawFile *os.File
-		if rawFile, err = os.Open(opts.FilenameRaw()); err != nil {
-			return
-		}
-		defer rawFile.Close()
-
-		rawReader := iocount.NewReader(rawFile)
-
-		var cpsFile *os.File
-		if cpsFile, err = os.OpenFile(opts.FilenameCompressed(), os.O_CREATE|os.O_RDWR, 0644); err != nil {
-			return
-		}
-		defer cpsFile.Close()
-
-		var cpsWriter *gzip.Writer
-		if cpsWriter, err = gzip.NewWriterLevel(cpsFile, opts.CompressionLevel); err != nil {
-			return
-		}
-		defer cpsWriter.Close()
-
-		prg := logutil.NewProgress(logutil.LoggerFunc(log.Printf), title)
-		prg.SetTotal(rawInfo.Size())
-		ctxP, cancelP := context.WithCancel(context.Background())
-		defer cancelP()
-
-		go func() {
-			t := time.NewTicker(time.Second * 3)
-			for {
-				select {
-				case <-t.C:
-					prg.SetCount(rawReader.ReadCount())
-				case <-ctxP.Done():
-					return
-				}
-			}
-		}()
-
-		if _, err = io.Copy(cpsWriter, rawReader); err != nil {
-			return
-		}
-
-		var cpsInfo os.FileInfo
-		if cpsInfo, err = os.Stat(opts.FilenameCompressed()); err != nil {
-			return
-		}
-
-		log.Printf("压缩后文件大小: %s/%s, %dmb", opts.Index, opts.Project, cpsInfo.Size()/1024/1024)
-
-		PrintMemUsageAndGC(title)
-
-		log.Printf("删除原始文件: %s/%s", opts.Index, opts.Project)
-		if err = os.Remove(opts.FilenameRaw()); err != nil {
-			return
-		}
-		return
-	})
-}
-
 func ProjectUploadCompressedData(opts ProjectMigrateOptions) conc.Task {
 	return conc.TaskFunc(func(ctx context.Context) (err error) {
-		log.Printf("上传压缩后文件: %s/%s", opts.Index, opts.Project)
+		log.Printf("上传本地文件: %s/%s", opts.Index, opts.Project)
 		if _, _, err = opts.COSClient.Object.Upload(ctx,
-			opts.Index+"/"+opts.Project+ExtCompressedNDJSON,
+			opts.COSKey(),
 			opts.FilenameCompressed(),
 			&cos.MultiUploadOptions{
 				PartSize:       1000,
@@ -183,7 +115,7 @@ func ProjectUploadCompressedData(opts ProjectMigrateOptions) conc.Task {
 		); err != nil {
 			return
 		}
-		log.Printf("删除压缩后文件: %s/%s", opts.Index, opts.Project)
+		log.Printf("删除本地文件: %s/%s", opts.Index, opts.Project)
 		if err = os.Remove(opts.FilenameCompressed()); err != nil {
 			return
 		}
