@@ -29,17 +29,17 @@ type ProjectMigrateOptions struct {
 	Project string
 }
 
-func (opts ProjectMigrateOptions) FilenameCompressed() string {
+func (opts ProjectMigrateOptions) FilenameLocal() string {
 	return filepath.Join(opts.Workspace(), opts.Project+ExtCompressedNDJSON)
 }
 
-func (opts ProjectMigrateOptions) COSKey() string {
+func (opts ProjectMigrateOptions) FilenameRemote() string {
 	return opts.Index + "/" + opts.Project + ExtCompressedNDJSON
 }
 
 func ProjectMigrate(opts ProjectMigrateOptions) conc.Task {
 	return conc.TaskFunc(func(ctx context.Context) error {
-		res, err := opts.COSClient.Object.Head(ctx, opts.COSKey(), nil)
+		res, err := opts.COSClient.Object.Head(ctx, opts.FilenameRemote(), nil)
 		if err == nil && res.StatusCode == http.StatusOK {
 			log.Printf("索引/项目已经存在: %s/%s", opts.Index, opts.Project)
 			return nil
@@ -61,7 +61,7 @@ func ProjectExportCompressedData(opts ProjectMigrateOptions) conc.Task {
 		}
 
 		var zf *os.File
-		if zf, err = os.OpenFile(opts.FilenameCompressed(), os.O_CREATE|os.O_RDWR, 0640); err != nil {
+		if zf, err = os.OpenFile(opts.FilenameLocal(), os.O_CREATE|os.O_RDWR, 0640); err != nil {
 			return
 		}
 		defer zf.Close()
@@ -103,8 +103,8 @@ func ProjectUploadCompressedData(opts ProjectMigrateOptions) conc.Task {
 	return conc.TaskFunc(func(ctx context.Context) (err error) {
 		log.Printf("上传本地文件: %s/%s", opts.Index, opts.Project)
 		if _, _, err = opts.COSClient.Object.Upload(ctx,
-			opts.COSKey(),
-			opts.FilenameCompressed(),
+			opts.FilenameRemote(),
+			opts.FilenameLocal(),
 			&cos.MultiUploadOptions{
 				PartSize:       1000,
 				ThreadPoolSize: runtime.NumCPU(),
@@ -116,7 +116,7 @@ func ProjectUploadCompressedData(opts ProjectMigrateOptions) conc.Task {
 			return
 		}
 		log.Printf("删除本地文件: %s/%s", opts.Index, opts.Project)
-		if err = os.Remove(opts.FilenameCompressed()); err != nil {
+		if err = os.Remove(opts.FilenameLocal()); err != nil {
 			return
 		}
 		return
