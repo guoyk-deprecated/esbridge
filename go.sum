@@ -13,8 +13,8 @@ github.com/google/go-querystring v1.0.0 h1:Xkwi/a1rcvNg1PPYe5vI8GbeBY/jrVuDX5ASu
 github.com/google/go-querystring v1.0.0/go.mod h1:odCYkC5MyYFN7vkCjXpyrEuKhc/BUO6wN/zVPAxq5ck=
 github.com/google/uuid v1.1.1 h1:Gkbcsh/GbpXz7lPftLA3P6TYMwjCLYm83jiFQZF/3gY=
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/guoyk93/conc v1.1.0 h1:4I/fShqORJnl6jfew+PH36MN1MJ5LKCDPbrgRT+Zu68=
-github.com/guoyk93/conc v1.1.0/go.mod h1:z0T9YRNs53m5zqIJ3AXNHujODzLqwxfbedT7xZ6yM0c=
+github.com/guoyk93/conc v1.1.1 h1:t3Om3UMCPWz+tKJvO3BbvIA0j78WhwKrA61jdJSK+Xw=
+github.com/guoyk93/conc v1.1.1/go.mod h1:z0T9YRNs53m5zqIJ3AXNHujODzLqwxfbedT7xZ6yM0c=
 github.com/guoyk93/esexporter v1.2.0 h1:vhk8QhacsyTy35sMZXiXIr0pHephN8uq5RNW23ersWE=
 github.com/guoyk93/esexporter v1.2.0/go.mod h1:Fr5ioXETupYrQczUlzBlVJX6XVKRaJr6kfGDLqXdghg=
 github.com/guoyk93/iocount v1.0.0 h1:W/wcX2SWvxW7LwfyMTaori1Lfu0Z5KwdpYgpRRE6lL8=

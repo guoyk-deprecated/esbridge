@@ -2,7 +2,7 @@
 github.com/buger/jsonparser
 # github.com/google/go-querystring v1.0.0
 github.com/google/go-querystring/query
-# github.com/guoyk93/conc v1.1.0
+# github.com/guoyk93/conc v1.1.1
 ## explicit
 github.com/guoyk93/conc
 # github.com/guoyk93/esexporter v1.2.0

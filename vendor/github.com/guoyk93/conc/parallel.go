@@ -44,6 +44,10 @@ func ParallelWithLimit(limit int, tasks ...Task) Task {
 				defer wg.Done()
 				lm.Take()
 				defer lm.Done()
+				if ctx2.Err() != nil {
+					errs[i] = ctx2.Err()
+					return
+				}
 				if err := task.Do(ctx2); err != nil {
 					ctx2Cancel()
 					errs[i] = err
@@ -89,6 +93,10 @@ func ParallelFailSafeWithLimit(limit int, tasks ...Task) Task {
 				defer wg.Done()
 				lm.Take()
 				defer lm.Done()
+				if ctx.Err() != nil {
+					errs[i] = ctx.Err()
+					return
+				}
 				errs[i] = task.Do(ctx)
 			}()
 		}
