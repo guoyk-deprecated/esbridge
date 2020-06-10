@@ -74,7 +74,7 @@ func ProjectExportCompressedData(opts ProjectMigrateOptions) conc.Task {
 
 		prg := logutil.NewProgress(logutil.LoggerFunc(log.Printf), title)
 
-		chSrc := make(chan []byte, opts.Bulk)
+		chSrc := make(chan []byte, opts.Bulk+opts.Bulk/2)
 
 		taskWrite := conc.TaskFunc(func(ctx context.Context) (err error) {
 			for {
