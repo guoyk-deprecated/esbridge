@@ -28,9 +28,9 @@ func (p *progress) set(count int64, total int64) {
 	}
 	if value != p.value {
 		if value == ProgressInvalid {
-			p.logger.Printf("%s [???%%]", p.label)
+			p.logger.Printf("%s [???%%] (%d/%d)", p.label, count, total)
 		} else {
-			p.logger.Printf("%s [%3d%%]", p.label, value)
+			p.logger.Printf("%s [%3d%%] (%d/%d)", p.label, value, count, total)
 		}
 	}
 	p.count = count
