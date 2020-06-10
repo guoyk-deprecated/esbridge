@@ -9,7 +9,7 @@ import (
 	"github.com/guoyk93/esbridge/tasks"
 	"github.com/guoyk93/iocount"
 	"github.com/guoyk93/logutil"
-	"github.com/klauspost/compress/gzip"
+	gzip "github.com/klauspost/pgzip"
 	"github.com/olivere/elastic"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"io"

@@ -17,7 +17,6 @@ github.com/guoyk93/logutil
 # github.com/klauspost/compress v1.10.8
 ## explicit
 github.com/klauspost/compress/flate
-github.com/klauspost/compress/gzip
 # github.com/klauspost/pgzip v1.2.4
 ## explicit
 github.com/klauspost/pgzip
