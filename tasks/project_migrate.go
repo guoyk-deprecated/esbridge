@@ -73,8 +73,7 @@ func ProjectExportRawData(opts ProjectMigrateOptions) conc.Task {
 
 		prg := logutil.NewProgress(logutil.LoggerFunc(log.Printf), title)
 
-		if err = esexporter.New(esexporter.Options{
-			Client: opts.ESClient,
+		if err = esexporter.New(opts.ESClient, esexporter.Options{
 			Index:  opts.Index,
 			Query:  elastic.NewTermQuery("project", opts.Project),
 			Type:   "_doc",
