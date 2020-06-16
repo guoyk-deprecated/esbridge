@@ -19,6 +19,10 @@ import (
 
 func COSSearch(clientCOS *cos.Client, keyword string) (err error) {
 	log.Printf("在腾讯云存储搜索: %s", keyword)
+	splits := strings.Split(keyword, ",")
+	for i, s := range splits {
+		splits[i] = strings.TrimSpace(s)
+	}
 	var marker string
 	var res *cos.BucketGetResult
 	for {
@@ -33,8 +37,10 @@ func COSSearch(clientCOS *cos.Client, keyword string) (err error) {
 				continue
 			}
 			p := strings.TrimPrefix(strings.TrimSuffix(o.Key, tasks.ExtCompressedNDJSON), "/")
-			if !strings.Contains(p, keyword) {
-				continue
+			for _, s := range splits {
+				if !strings.Contains(p, s) {
+					continue
+				}
 			}
 			ss := strings.Split(p, "/")
 			if len(ss) != 2 {
