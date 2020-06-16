@@ -24,7 +24,6 @@ var (
 	optMigrate     string
 	optRestore     string
 	optSearch      string
-	optNoDelete    bool
 	optBulk        int
 	optConcurrency int
 
@@ -39,7 +38,6 @@ func load() (err error) {
 	flag.StringVar(&optSearch, "search", "", "要搜索的关键字")
 	flag.IntVar(&optBulk, "bulk", 5000, "导出时的批量数")
 	flag.IntVar(&optConcurrency, "concurrency", 3, "导出时的并发数")
-	flag.BoolVar(&optNoDelete, "no-delete", false, "迁移时不删除索引，仅用于测试")
 	flag.BoolVar(&optBestCompression, "best-compression", false, "最佳压缩率")
 	flag.BoolVar(&optBestSpeed, "best-speed", false, "最佳压缩速度")
 	flag.Parse()
@@ -110,7 +108,6 @@ func main() {
 		if err = tasks.IndexMigrate(tasks.IndexMigrateOptions{
 			ESClient:         clientES,
 			COSClient:        clientCOS,
-			NoDelete:         optNoDelete,
 			Dir:              conf.Workspace,
 			Index:            index,
 			Bulk:             optBulk,
