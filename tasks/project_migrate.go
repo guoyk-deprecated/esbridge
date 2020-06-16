@@ -67,7 +67,7 @@ func ProjectExportCompressedData(opts ProjectMigrateOptions) conc.Task {
 		defer zf.Close()
 
 		var zw *gzip.Writer
-		if zw, err = gzip.NewWriterLevel(zf, gzip.DefaultCompression); err != nil {
+		if zw, err = gzip.NewWriterLevel(zf, gzip.BestCompression); err != nil {
 			return
 		}
 		defer zw.Close()
