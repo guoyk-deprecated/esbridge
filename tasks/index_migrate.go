@@ -20,6 +20,7 @@ const (
 type IndexMigrateOptions struct {
 	ESClient         *elastic.Client
 	COSClient        *cos.Client
+	NoDelete         bool
 	Dir              string
 	Index            string
 	Bulk             int
@@ -63,6 +64,12 @@ func IndexMigrate(opts IndexMigrateOptions) conc.Task {
 		}
 		if err = conc.ParallelWithLimit(opts.Concurrency, tasks...).Do(ctx); err != nil {
 			return
+		}
+		if !opts.NoDelete {
+			log.Printf("删除索引: %s", opts.Index)
+			if _, err = opts.ESClient.DeleteIndex(opts.Index).Do(ctx); err != nil {
+				return
+			}
 		}
 		log.Printf("删除本地目录: %s", opts.Workspace())
 		if err = os.RemoveAll(opts.Workspace()); err != nil {
