@@ -7,7 +7,7 @@ github.com/google/go-querystring/query
 # github.com/guoyk93/conc v1.1.1
 ## explicit
 github.com/guoyk93/conc
-# github.com/guoyk93/esexporter v1.2.1
+# github.com/guoyk93/esexporter v1.3.0
 ## explicit
 github.com/guoyk93/esexporter
 # github.com/guoyk93/iocount v1.0.0

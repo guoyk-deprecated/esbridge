@@ -23,7 +23,7 @@ type IndexMigrateOptions struct {
 	NoDelete         bool
 	Dir              string
 	Index            string
-	Bulk             int
+	BatchByteSize    int
 	Concurrency      int
 	CompressionLevel int
 }
