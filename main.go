@@ -27,12 +27,14 @@ var (
 	optNoDelete      bool
 	optBatchByteSize int
 	optConcurrency   int
+	optNeo           bool
 
 	optBestCompression bool
 	optBestSpeed       bool
 )
 
 func load() (err error) {
+	flag.BoolVar(&optNeo, "neo", false, "neo")
 	flag.StringVar(&optConf, "conf", "/etc/esbridge.yml", "配置文件")
 	flag.StringVar(&optMigrate, "migrate", "", "要迁移的离线索引, ")
 	flag.StringVar(&optRestore, "restore", "", "要恢复的离线索引, 格式为 INDEX/PROJECT")
@@ -107,17 +109,32 @@ func main() {
 			return
 		}
 
-		if err = tasks.IndexMigrate(tasks.IndexMigrateOptions{
-			ESClient:         clientES,
-			COSClient:        clientCOS,
-			NoDelete:         optNoDelete,
-			Dir:              conf.Workspace,
-			Index:            index,
-			BatchByteSize:    optBatchByteSize,
-			Concurrency:      optConcurrency,
-			CompressionLevel: gzip.BestCompression,
-		}).Do(context.Background()); err != nil {
-			return
+		if optNeo {
+			if err = tasks.IndexMigrateNeo(tasks.IndexMigrateOptions{
+				ESClient:         clientES,
+				COSClient:        clientCOS,
+				NoDelete:         optNoDelete,
+				Dir:              conf.Workspace,
+				Index:            index,
+				BatchByteSize:    optBatchByteSize,
+				Concurrency:      optConcurrency,
+				CompressionLevel: gzip.BestCompression,
+			}).Do(context.Background()); err != nil {
+				return
+			}
+		} else {
+			if err = tasks.IndexMigrate(tasks.IndexMigrateOptions{
+				ESClient:         clientES,
+				COSClient:        clientCOS,
+				NoDelete:         optNoDelete,
+				Dir:              conf.Workspace,
+				Index:            index,
+				BatchByteSize:    optBatchByteSize,
+				Concurrency:      optConcurrency,
+				CompressionLevel: gzip.BestCompression,
+			}).Do(context.Background()); err != nil {
+				return
+			}
 		}
 
 	case optRestore != "":

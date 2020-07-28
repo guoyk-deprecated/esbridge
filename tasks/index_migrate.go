@@ -3,7 +3,11 @@ package tasks
 import (
 	"context"
 	"errors"
+	"github.com/buger/jsonparser"
 	"github.com/guoyk93/conc"
+	"github.com/guoyk93/esexporter"
+	"github.com/guoyk93/logutil"
+	"github.com/klauspost/pgzip"
 	"github.com/olivere/elastic"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"log"
@@ -30,6 +34,104 @@ type IndexMigrateOptions struct {
 
 func (opts IndexMigrateOptions) Workspace() string {
 	return filepath.Join(opts.Dir, opts.Index)
+}
+
+func IndexMigrateNeo(opts IndexMigrateOptions) conc.Task {
+	return conc.TaskFunc(func(ctx context.Context) (err error) {
+		log.Printf("确保工作目录: %s", opts.Workspace())
+		if err = os.RemoveAll(opts.Workspace()); err != nil {
+			return
+		}
+		if err = os.MkdirAll(opts.Workspace(), 0755); err != nil {
+			return
+		}
+		log.Printf("打开索引并等待索引恢复: %s", opts.Index)
+		if _, err = opts.ESClient.OpenIndex(opts.Index).WaitForActiveShards("all").Do(ctx); err != nil {
+			return
+		}
+		log.Printf("获取索引中包含的项目: %s", opts.Index)
+		var projects []string
+		if err = IndexCollectProjects(opts, &projects).Do(ctx); err != nil {
+			return
+		}
+		log.Printf("准备写入文件")
+		var files = make(map[string]*os.File)
+		for _, p := range projects {
+			if files[p], err = os.OpenFile(filepath.Join(opts.Workspace(), p+ExtCompressedNDJSON), os.O_CREATE|os.O_RDWR, 0644); err != nil {
+				return
+			}
+		}
+		log.Printf("准备压缩写入")
+		var zips = make(map[string]*pgzip.Writer)
+		for p, f := range files {
+			if zips[p], err = pgzip.NewWriterLevel(f, opts.CompressionLevel); err != nil {
+				return
+			}
+		}
+		prg := logutil.NewProgress(logutil.LoggerFunc(log.Printf), "导出")
+		if err = esexporter.New(opts.ESClient, esexporter.Options{
+			Index:         opts.Index,
+			Type:          "_doc",
+			Scroll:        "10m",
+			BatchByteSize: int64(opts.BatchByteSize),
+		}, func(buf []byte, id int64, total int64) (err error) {
+			prg.SetTotal(total)
+			prg.SetCount(id + 1)
+			var p string
+			if p, err = jsonparser.GetString(buf, "project"); err != nil {
+				return
+			}
+			if p == "" {
+				err = errors.New("missing 'project'")
+				return
+			}
+			w := zips[p]
+			if w == nil {
+				err = errors.New("missing zip writer")
+				return
+			}
+			if _, err = w.Write(buf); err != nil {
+				return
+			}
+			if _, err = w.Write(newLine); err != nil {
+				return
+			}
+			return
+		}).Do(ctx); err != nil {
+			return
+		}
+		log.Printf("导出完成")
+		for _, zw := range zips {
+			if err = zw.Close(); err != nil {
+				return
+			}
+		}
+		for _, f := range files {
+			if err = f.Close(); err != nil {
+				return
+			}
+		}
+		log.Printf("准备上传")
+		for _, p := range projects {
+			if err = ProjectUploadCompressedData(ProjectMigrateOptions{
+				Project:             p,
+				IndexMigrateOptions: opts,
+			}).Do(ctx); err != nil {
+				return
+			}
+		}
+		if !opts.NoDelete {
+			log.Printf("删除索引: %s", opts.Index)
+			if _, err = opts.ESClient.DeleteIndex(opts.Index).Do(ctx); err != nil {
+				return
+			}
+		}
+		log.Printf("删除本地目录: %s", opts.Workspace())
+		if err = os.RemoveAll(opts.Workspace()); err != nil {
+			return
+		}
+		return
+	})
 }
 
 func IndexMigrate(opts IndexMigrateOptions) conc.Task {
