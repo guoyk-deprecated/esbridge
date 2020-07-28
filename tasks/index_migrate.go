@@ -68,7 +68,7 @@ func IndexMigrateNeo(opts IndexMigrateOptions) conc.Task {
 				return
 			}
 		}
-		prg := logutil.NewProgress(logutil.LoggerFunc(log.Printf), "导出")
+		prg := logutil.NewProgress(logutil.LoggerFunc(log.Printf), "导出进度")
 		if err = esexporter.New(opts.ESClient, esexporter.Options{
 			Index:         opts.Index,
 			Type:          "_doc",
