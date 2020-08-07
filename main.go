@@ -91,6 +91,7 @@ func main() {
 	if clientES, err = elastic.NewClient(
 		elastic.SetURL(conf.Elasticsearch.URL),
 		elastic.SetGzip(false),
+		elastic.SetSniff(false),
 	); err != nil {
 		return
 	}
