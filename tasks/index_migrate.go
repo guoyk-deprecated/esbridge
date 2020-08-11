@@ -27,7 +27,7 @@ type IndexMigrateOptions struct {
 	NoDelete         bool
 	Dir              string
 	Index            string
-	BatchByteSize    int
+	BatchSize        int
 	Concurrency      int
 	CompressionLevel int
 }
@@ -70,10 +70,10 @@ func IndexMigrateNeo(opts IndexMigrateOptions) conc.Task {
 		}
 		prg := logutil.NewProgress(logutil.LoggerFunc(log.Printf), "导出进度")
 		if err = esexporter.New(opts.ESClient, esexporter.Options{
-			Index:         opts.Index,
-			Type:          "_doc",
-			Scroll:        "10m",
-			BatchByteSize: int64(opts.BatchByteSize),
+			Index:     opts.Index,
+			Type:      "_doc",
+			Scroll:    "10m",
+			BatchSize: int64(opts.BatchSize),
 		}, func(buf []byte, id int64, total int64) (err error) {
 			prg.SetTotal(total)
 			prg.SetCount(id + 1)

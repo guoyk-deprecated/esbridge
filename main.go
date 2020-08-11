@@ -20,14 +20,14 @@ import (
 var (
 	conf Conf
 
-	optConf          string
-	optMigrate       string
-	optRestore       string
-	optSearch        string
-	optNoDelete      bool
-	optBatchByteSize int
-	optConcurrency   int
-	optNeo           bool
+	optConf        string
+	optMigrate     string
+	optRestore     string
+	optSearch      string
+	optNoDelete    bool
+	optBatchSize   int
+	optConcurrency int
+	optNeo         bool
 
 	optBestCompression bool
 	optBestSpeed       bool
@@ -39,7 +39,7 @@ func load() (err error) {
 	flag.StringVar(&optMigrate, "migrate", "", "要迁移的离线索引, ")
 	flag.StringVar(&optRestore, "restore", "", "要恢复的离线索引, 格式为 INDEX/PROJECT")
 	flag.StringVar(&optSearch, "search", "", "要搜索的关键字")
-	flag.IntVar(&optBatchByteSize, "batch-byte-size", 1000000000, "导出时的每批次内存占用")
+	flag.IntVar(&optBatchSize, "batch-size", 2000, "导出时的每批次大小")
 	flag.IntVar(&optConcurrency, "concurrency", 3, "导出时的并发数")
 	flag.BoolVar(&optNoDelete, "no-delete", false, "迁移时不删除索引，仅用于测试")
 	flag.BoolVar(&optBestCompression, "best-compression", false, "最佳压缩率")
@@ -117,7 +117,7 @@ func main() {
 				NoDelete:         optNoDelete,
 				Dir:              conf.Workspace,
 				Index:            index,
-				BatchByteSize:    optBatchByteSize,
+				BatchSize:        optBatchSize,
 				Concurrency:      optConcurrency,
 				CompressionLevel: gzip.BestCompression,
 			}).Do(context.Background()); err != nil {
@@ -130,7 +130,7 @@ func main() {
 				NoDelete:         optNoDelete,
 				Dir:              conf.Workspace,
 				Index:            index,
-				BatchByteSize:    optBatchByteSize,
+				BatchSize:        optBatchSize,
 				Concurrency:      optConcurrency,
 				CompressionLevel: gzip.BestCompression,
 			}).Do(context.Background()); err != nil {

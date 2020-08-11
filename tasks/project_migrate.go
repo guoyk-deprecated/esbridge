@@ -80,7 +80,7 @@ func ProjectExportCompressedData(opts ProjectMigrateOptions) conc.Task {
 				Query:         elastic.NewTermQuery("project", opts.Project),
 				Type:          "_doc",
 				Scroll:        "10m",
-				BatchByteSize: int64(opts.BatchByteSize),
+				BatchByteSize: int64(opts.BatchSize),
 			}, func(buf []byte, id int64, total int64) (err error) {
 				prg.SetTotal(total)
 				prg.SetCount(id + 1)
