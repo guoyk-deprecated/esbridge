@@ -76,11 +76,11 @@ func ProjectExportCompressedData(opts ProjectMigrateOptions) conc.Task {
 
 		task := conc.TaskFunc(func(ctx context.Context) error {
 			return esexporter.New(opts.ESClient, esexporter.Options{
-				Index:         opts.Index,
-				Query:         elastic.NewTermQuery("project", opts.Project),
-				Type:          "_doc",
-				Scroll:        "10m",
-				BatchByteSize: int64(opts.BatchSize),
+				Index:     opts.Index,
+				Query:     elastic.NewTermQuery("project", opts.Project),
+				Type:      "_doc",
+				Scroll:    "10m",
+				BatchSize: int64(opts.BatchSize),
 			}, func(buf []byte, id int64, total int64) (err error) {
 				prg.SetTotal(total)
 				prg.SetCount(id + 1)
