@@ -44,7 +44,6 @@ func ElasticsearchTuneForRecoveryStart(clientES *elastic.Client, index string) (
 	_, err = clientES.IndexPutSettings(index).FlatSettings(true).BodyJson(M{
 		"index.routing.allocation.exclude.disktype": nil,
 		"index.routing.allocation.require.disktype": "hdd",
-		"index.translog.sync_interval":              "1m",
 		"index.refresh_interval":                    "1m",
 	}).Do(context.Background())
 	return
@@ -55,7 +54,6 @@ func ElasticsearchTuneForRecoveryEnd(clientES *elastic.Client, index string) (er
 	_, err = clientES.IndexPutSettings(index).FlatSettings(true).BodyJson(M{
 		"index.routing.allocation.exclude.disktype": nil,
 		"index.routing.allocation.require.disktype": "hdd",
-		"index.translog.sync_interval":              "10s",
 		"index.refresh_interval":                    "10s",
 	}).Do(context.Background())
 	return
