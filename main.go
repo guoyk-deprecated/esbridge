@@ -162,10 +162,10 @@ func main() {
 			return
 		}
 
-		if err = ElasticsearchDisableRefresh(clientES, index); err != nil {
+		if err = ElasticsearchTuneForRecoveryStart(clientES, index); err != nil {
 			return
 		}
-		defer ElasticsearchEnableRefresh(clientES, index)
+		defer ElasticsearchTuneForRecoveryEnd(clientES, index)
 
 		if err = COSImportToES(clientCOS, index, project, clientES); err != nil {
 			return

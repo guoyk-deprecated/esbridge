@@ -6,6 +6,8 @@ import (
 	"log"
 )
 
+type M map[string]interface{}
+
 func ElasticsearchTouchIndex(clientES *elastic.Client, index string) (err error) {
 	log.Printf("确保索引存在: %s", index)
 	var ok bool
@@ -13,25 +15,48 @@ func ElasticsearchTouchIndex(clientES *elastic.Client, index string) (err error)
 		return
 	}
 	if !ok {
-		if _, err = clientES.CreateIndex(index).Do(context.Background()); err != nil {
+		if _, err = clientES.CreateIndex(index).BodyJson(M{
+			"settings": M{
+				"index": M{
+					"number_of_replicas": "0",
+					"number_of_shards":   "6",
+					"routing": M{
+						"allocation": M{
+							"exclude": M{
+								"disktype": nil,
+							},
+							"require": M{
+								"disktype": "hdd",
+							},
+						},
+					},
+				},
+			},
+		}).Do(context.Background()); err != nil {
 			return
 		}
 	}
 	return
 }
 
-func ElasticsearchDisableRefresh(clientES *elastic.Client, index string) (err error) {
-	log.Printf("调整索引刷新，为写入大量数据做准备: %s", index)
-	_, err = clientES.IndexPutSettings(index).FlatSettings(true).BodyJson(map[string]interface{}{
-		"index.refresh_interval": "2m",
+func ElasticsearchTuneForRecoveryStart(clientES *elastic.Client, index string) (err error) {
+	log.Printf("调整索引设置，为写入大量数据做准备: %s", index)
+	_, err = clientES.IndexPutSettings(index).FlatSettings(true).BodyJson(M{
+		"index.routing.allocation.exclude.disktype": nil,
+		"index.routing.allocation.require.disktype": "hdd",
+		"index.translog.sync_interval":              "1m",
+		"index.refresh_interval":                    "1m",
 	}).Do(context.Background())
 	return
 }
 
-func ElasticsearchEnableRefresh(clientES *elastic.Client, index string) (err error) {
-	log.Printf("恢复索引刷新: %s", index)
-	_, err = clientES.IndexPutSettings(index).FlatSettings(true).BodyJson(map[string]interface{}{
-		"index.refresh_interval": "10s",
+func ElasticsearchTuneForRecoveryEnd(clientES *elastic.Client, index string) (err error) {
+	log.Printf("恢复索引设置: %s", index)
+	_, err = clientES.IndexPutSettings(index).FlatSettings(true).BodyJson(M{
+		"index.routing.allocation.exclude.disktype": nil,
+		"index.routing.allocation.require.disktype": "hdd",
+		"index.translog.sync_interval":              "10s",
+		"index.refresh_interval":                    "10s",
 	}).Do(context.Background())
 	return
 }
