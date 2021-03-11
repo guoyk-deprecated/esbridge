@@ -48,7 +48,7 @@ func COSSearch(clientCOS *cos.Client, keyword string) (err error) {
 				log.Printf("发现未知文件: %s", o.Key)
 				continue
 			}
-			log.Printf("找到 INDEX = %s, PROJECT = %s", ss[0], ss[1])
+			log.Printf("找到 INDEX = %s, PROJECT = %s, SIZE = %02f", ss[0], ss[1], float64(o.Size)/1000000.0)
 		}
 		if res.IsTruncated {
 			marker = res.NextMarker
