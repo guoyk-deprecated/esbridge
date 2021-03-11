@@ -31,6 +31,7 @@ func COSSearch(clientCOS *cos.Client, keyword string) (err error) {
 		}); err != nil {
 			return
 		}
+	outerLoop:
 		for _, o := range res.Contents {
 			if !strings.HasSuffix(o.Key, tasks.ExtCompressedNDJSON) {
 				log.Printf("发现未知文件: %s", o.Key)
@@ -39,7 +40,7 @@ func COSSearch(clientCOS *cos.Client, keyword string) (err error) {
 			p := strings.TrimPrefix(strings.TrimSuffix(o.Key, tasks.ExtCompressedNDJSON), "/")
 			for _, s := range splits {
 				if !strings.Contains(p, s) {
-					continue
+					continue outerLoop
 				}
 			}
 			ss := strings.Split(p, "/")
