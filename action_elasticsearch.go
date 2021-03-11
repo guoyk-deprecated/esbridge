@@ -21,9 +21,9 @@ func ElasticsearchTouchIndex(clientES *elastic.Client, index string) (err error)
 }
 
 func ElasticsearchDisableRefresh(clientES *elastic.Client, index string) (err error) {
-	log.Printf("关闭索引刷新，为写入大量数据做准备: %s", index)
+	log.Printf("调整索引刷新，为写入大量数据做准备: %s", index)
 	_, err = clientES.IndexPutSettings(index).FlatSettings(true).BodyJson(map[string]interface{}{
-		"index.refresh_interval": "-1",
+		"index.refresh_interval": "2m",
 	}).Do(context.Background())
 	return
 }

@@ -87,7 +87,7 @@ func COSImportToES(clientCOS *cos.Client, index, project string, clientES *elast
 
 	commit := func(force bool) (err error) {
 		if bs != nil {
-			if force || bs.NumberOfActions() > 10000 {
+			if force || bs.NumberOfActions() > 4000 {
 				var res *elastic.BulkResponse
 				if res, err = bs.Do(context.Background()); err != nil {
 					return
