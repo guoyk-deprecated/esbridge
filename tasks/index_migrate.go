@@ -45,6 +45,13 @@ func IndexMigrateNeo(opts IndexMigrateOptions) conc.Task {
 		if err = os.MkdirAll(opts.Workspace(), 0755); err != nil {
 			return
 		}
+		log.Printf("取消索引只读状态，防止打开失败: %s", opts.Index)
+		if _, err = opts.ESClient.IndexPutSettings(opts.Index).FlatSettings(true).BodyJson(map[string]interface{}{
+			"index.blocks.write":                  nil,
+			"index.blocks.read_only_allow_delete": nil,
+		}).Do(context.Background()); err != nil {
+			return
+		}
 		log.Printf("打开索引并等待索引恢复: %s", opts.Index)
 		if _, err = opts.ESClient.OpenIndex(opts.Index).WaitForActiveShards("all").Do(ctx); err != nil {
 			return
@@ -138,6 +145,13 @@ func IndexMigrate(opts IndexMigrateOptions) conc.Task {
 	return conc.TaskFunc(func(ctx context.Context) (err error) {
 		log.Printf("确保工作目录: %s", opts.Workspace())
 		if err = os.MkdirAll(opts.Workspace(), 0755); err != nil {
+			return
+		}
+		log.Printf("取消索引只读状态，防止打开失败: %s", opts.Index)
+		if _, err = opts.ESClient.IndexPutSettings(opts.Index).FlatSettings(true).BodyJson(map[string]interface{}{
+			"index.blocks.write":                  nil,
+			"index.blocks.read_only_allow_delete": nil,
+		}).Do(context.Background()); err != nil {
 			return
 		}
 		log.Printf("打开索引并等待索引恢复: %s", opts.Index)
