@@ -124,7 +124,7 @@ func ProjectUploadCompressedData(opts ProjectMigrateOptions) conc.Task {
 			return
 		}
 		log.Printf("删除数据: %s", opts.Project)
-		if _, err = opts.ESClient.DeleteByQuery(opts.Index).Query(elastic.NewTermQuery("project", opts.Project)).WaitForCompletion(true).Do(ctx); err != nil {
+		if _, err = opts.ESClient.DeleteByQuery(opts.Index).Query(elastic.NewTermQuery("project", opts.Project)).Refresh("true").WaitForCompletion(true).Do(ctx); err != nil {
 			return
 		}
 		return
