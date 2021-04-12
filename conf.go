@@ -13,7 +13,7 @@ type Conf struct {
 	} `yaml:"pprof"`
 	Workspace     string `yaml:"workspace"`
 	Elasticsearch struct {
-		URL string `yaml:"url"`
+		URLs []string `yaml:"urls"`
 	} `yaml:"elasticsearch"`
 	COS struct {
 		URL       string `yaml:"url"`
@@ -39,9 +39,6 @@ func LoadConf(file string) (conf Conf, err error) {
 		return
 	}
 	if err = checkFieldStr(&conf.Workspace, "workspace"); err != nil {
-		return
-	}
-	if err = checkFieldStr(&conf.Elasticsearch.URL, "elasticsearch.url"); err != nil {
 		return
 	}
 	if err = checkFieldStr(&conf.COS.URL, "cos.url"); err != nil {
