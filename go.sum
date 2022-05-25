@@ -1,7 +1,7 @@
 github.com/QcloudApi/qcloud_sign_golang v0.0.0-20141224014652-e4130a326409/go.mod h1:1pk82RBxDY/JZnPQrtqHlUFfCctgdorsd9M06fMynOM=
-github.com/buger/jsonparser v1.0.0 h1:etJTGF5ESxjI0Ic2UaLQs2LQQpa8G9ykQScukbh4L8A=
 github.com/buger/jsonparser v1.0.0/go.mod h1:tgcrVJ81GPSF0mz+0nu1Xaz0fazGPrmmJfJtxjbHhUQ=
-github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
+github.com/buger/jsonparser v1.1.1 h1:2PnMjfWD7wBILjqQbt530v576A/cAbQvEW9gGIpYMUs=
+github.com/buger/jsonparser v1.1.1/go.mod h1:6RYKKt7H4d4+iWqouImQ9R2FZql3VbhNgx27UK13J/0=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -19,7 +19,6 @@ github.com/guoyk93/esexporter v1.4.0 h1:60XEL+K11bWt56owatMMc2F+1YrEcrPQyr+4SbD2
 github.com/guoyk93/esexporter v1.4.0/go.mod h1:Fr5ioXETupYrQczUlzBlVJX6XVKRaJr6kfGDLqXdghg=
 github.com/guoyk93/iocount v1.0.0 h1:W/wcX2SWvxW7LwfyMTaori1Lfu0Z5KwdpYgpRRE6lL8=
 github.com/guoyk93/iocount v1.0.0/go.mod h1:liRY2VKoMqynnZEiKVtC4FTl0VX9QQibmm+nHBHZR7s=
-github.com/guoyk93/logutil v1.0.0 h1:yoVVh4EuAoN1viBrP7ZnVijvatwrRfIDrm2SGprlHJ0=
 github.com/guoyk93/logutil v1.0.0/go.mod h1:HszSIxq8EecplH+383axY9UznRsyL+ojVCtmqIsgemU=
 github.com/guoyk93/logutil v1.0.1 h1:ovHOL3Xmp0qkH02q1NTBm26X6T/K3sPkzpfvbehcmoo=
 github.com/guoyk93/logutil v1.0.1/go.mod h1:HszSIxq8EecplH+383axY9UznRsyL+ojVCtmqIsgemU=
