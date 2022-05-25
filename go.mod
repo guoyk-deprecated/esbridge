@@ -3,7 +3,7 @@ module github.com/guoyk93/esbridge
 go 1.14
 
 require (
-	github.com/buger/jsonparser v1.0.0
+	github.com/buger/jsonparser v1.1.1
 	github.com/guoyk93/conc v1.1.1
 	github.com/guoyk93/esexporter v1.4.0
 	github.com/guoyk93/iocount v1.0.0
